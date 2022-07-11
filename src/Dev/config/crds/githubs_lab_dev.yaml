@@ -1,0 +1,67 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: githubs.lab.dev
+spec:
+  group: lab.dev
+  names:
+    kind: Github
+    listKind: GithubList
+    plural: githubs
+    singular: github
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.organisation
+      name: Organisation
+      priority: 0
+      type: string
+    - jsonPath: .spec.globalTeam
+      name: GlobalTeam
+      priority: 0
+      type: string
+    name: v1
+    schema:
+      openAPIV3Schema:
+        properties:
+          status:
+            description: Status object for the entity.
+            properties:
+              credentialsReference:
+                nullable: true
+                properties:
+                  name:
+                    type: string
+                  namespaceProperty:
+                    type: string
+                type: object
+            type: object
+          spec:
+            description: Specification of the kubernetes object.
+            properties:
+              organisation:
+                type: string
+              credentials:
+                nullable: true
+                type: string
+              archive:
+                type: boolean
+              visibility:
+                enum:
+                - Public
+                - Internal
+                - Private
+                type: string
+              globalTeam:
+                type: string
+              archiveTeam:
+                type: string
+            required:
+            - organisation
+            - credentials
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
