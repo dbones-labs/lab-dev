@@ -1,0 +1,44 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: ranchers.lab.dev
+spec:
+  group: lab.dev
+  names:
+    kind: Rancher
+    listKind: RancherList
+    plural: ranchers
+    singular: rancher
+  scope: Cluster
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        properties:
+          status:
+            description: Status object for the entity.
+            properties:
+              credentialsReference:
+                nullable: true
+                properties:
+                  name:
+                    type: string
+                  namespaceProperty:
+                    type: string
+                type: object
+            type: object
+          spec:
+            description: Specification of the kubernetes object.
+            properties:
+              url:
+                nullable: true
+                type: string
+              credentials:
+                nullable: true
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
