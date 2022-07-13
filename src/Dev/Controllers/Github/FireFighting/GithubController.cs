@@ -6,7 +6,6 @@ using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
 using Octokit;
-using v1.Core;
 using v1.Core.Tenancies;
 using v1.Platform.Github;
 using Repository = Octokit.Repository;
@@ -129,6 +128,8 @@ public class GithubController : IResourceController<Github>
                 Spec = new() 
                 {
                     Account = requesterAccount.Metadata.Name,
+                    Number = issue.Number,
+                    RepositoryId = repository.Id,
                     Tenancy = @namespace,
                     Start = SystemDateTime.UtcNow,
                     Finish = SystemDateTime.UtcNow.AddHours(8)

@@ -6,10 +6,9 @@ using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
 using Octokit;
-using v1.Core;
 using v1.Core.Tenancies;
 using Repository = v1.Platform.Github.Repository;
-
+using State = v1.Platform.Github.State;
 
 /// <summary>
 /// manage the repo only, for team access this is via collaborators
@@ -83,7 +82,6 @@ public class RepositoryController : IResourceController<Repository>
         
         await EnsureLabel(repository, FireFighter.Activated());
         await EnsureLabel(repository, FireFighter.Approved());
-        await EnsureLabel(repository, FireFighter.Completed());
         await EnsureLabel(repository, FireFighter.Requested());
 
         var globalCollabName = Collab.GetCollabName(meta.Name, github.Spec.GlobalTeam);
