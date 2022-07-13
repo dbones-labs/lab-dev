@@ -41,7 +41,11 @@ public class TenancyController : IResourceController<Tenancy>
                 Metadata = new()
                 {
                     Name = teamName,
-                    NamespaceProperty = organisation
+                    NamespaceProperty = organisation,
+                    Labels = new Dictionary<string, string>()
+                    {
+                        { Team.PlatformLabel(), entity.Spec.IsPlatform ? "True" : "False" }
+                    }
                 },
                 
                 Spec = new()
@@ -127,6 +131,8 @@ public class TenancyController : IResourceController<Tenancy>
             await _kubernetesClient.Create(guestCollab);
         }
 
+        
+        
         return null;
     }
 

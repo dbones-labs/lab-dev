@@ -1,6 +1,5 @@
 ﻿namespace Dev.Controllers.Github;
 
-using System.Reflection;
 using DotnetKubernetesClient;
 using Internal;
 using KubeOps.Operator.Controller;
