@@ -41,6 +41,30 @@ public class GithubController : IResourceController<Github>
             _logger.LogWarning("ensure that you add a github secret");
         }
 
+        string @namespace = org.Metadata.NamespaceProperty;
+        var orgRepo = await _kubernetesClient.Get<Repository>(@namespace, @namespace);
+        if (orgRepo == null)
+        {
+            orgRepo = new()
+            {
+                Metadata = new()
+                {
+                    Name = @namespace,
+                    NamespaceProperty = @namespace
+                },
+                Spec = new()
+                {
+                    EnforceCollaborators = false,
+                    State = State.Active,
+                    Type = Type.System,
+                    Visibility = Visibility.Internal,
+                    OrganizationNamespace = @namespace
+                }
+            };
+
+            await _kubernetesClient.Create(orgRepo);
+        }
+        
         var globalTeamName = entity.Spec.GlobalTeam;
         var globalTeam = await _kubernetesClient.Get<Repository>(globalTeamName, orgNs);
         if (globalTeam == null)

@@ -131,7 +131,23 @@ public class TenancyController : IResourceController<Tenancy>
             await _kubernetesClient.Create(guestCollab);
         }
 
-        
+        if (entity.Spec.IsPlatform)
+        {
+            var platformOrgCollabName = Collab.GetCollabName(organisation, teamName);
+            var platformOrgCollab = await _kubernetesClient.Get<Collaborator>(platformOrgCollabName, organisation);
+            if (platformOrgCollab == null)
+            {
+                platformOrgCollab = Collab.Create(
+                    organisation,
+                    teamName,
+                    organisation,
+                    Membership.Push);
+            
+                await _kubernetesClient.Create(platformOrgCollab);
+            }
+            
+            //todo add the Zones
+        }
         
         return null;
     }
@@ -148,9 +164,12 @@ public class TenancyController : IResourceController<Tenancy>
         
         var collabName = Collab.GetCollabName(@namespace, teamName);
         var guestCollabName = Collab.GetCollabName(@namespace, guestTeamName);
+        var platformOrgCollabName = Collab.GetCollabName(organisation, teamName);
         
         await _kubernetesClient.Delete<Collaborator>(collabName, organisation);
         await _kubernetesClient.Delete<Collaborator>(guestCollabName, organisation);
+        await _kubernetesClient.Delete<Collaborator>(platformOrgCollabName, organisation);
+        
         await _kubernetesClient.Delete<Repository>(@namespace, @namespace);
     }
 }
