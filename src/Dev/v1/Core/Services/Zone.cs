@@ -1,6 +1,5 @@
-﻿namespace Dev.v1.Core;
+﻿namespace Dev.v1.Core.Services;
 
-using DotnetKubernetesClient.Entities;
 using k8s.Models;
 using KubeOps.Operator.Entities;
 using KubeOps.Operator.Entities.Annotations;

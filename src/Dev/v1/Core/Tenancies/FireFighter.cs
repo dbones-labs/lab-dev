@@ -1,4 +1,4 @@
-﻿namespace Dev.v1.Core;
+﻿namespace Dev.v1.Core.Tenancies;
 
 using k8s.Models;
 using KubeOps.Operator.Entities;

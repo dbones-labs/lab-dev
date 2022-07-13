@@ -5,6 +5,7 @@ using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
 using v1.Core;
+using v1.Core.Tenancies;
 using v1.Platform.Github;
 
 [EntityRbac(typeof(Member), Verbs = RbacVerb.All)]

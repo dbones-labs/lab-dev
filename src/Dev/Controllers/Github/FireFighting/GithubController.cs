@@ -6,6 +6,7 @@ using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
 using Octokit;
 using v1.Core;
+using v1.Core.Tenancies;
 using v1.Platform.Github;
 using Repository = Octokit.Repository;
 
@@ -87,8 +88,19 @@ public class GithubController : IResourceController<Github>
         
         var events = await _gitHubClient.Issue.Events.GetAllForIssue(repository.Id, issue.Number);
         var requestedEvent = events.LastOrDefault(x => x.Label.Name == FireFighter.Requested());
+        var approvedEvent = events.LastOrDefault(x => x.Label.Name == FireFighter.Approved());
 
         if (requestedEvent == null) return;
+        if (approvedEvent == null) return;
+
+        if (requestedEvent.Actor.Login == approvedEvent.Actor.Login)
+        {
+            var userName = approvedEvent.Actor.Name ?? approvedEvent.Actor.Login;
+            await _gitHubClient.Issue.Comment.Create(repository.Id, issue.Number,
+                $"Sorry {userName}, you cannot approve your own access");
+            
+            return;
+        }
         
         var login = requestedEvent.Actor.Login;
         var requesterAccount = await _kubernetesClient.GetAccountByGithubUser(github.Metadata.NamespaceProperty, login);
