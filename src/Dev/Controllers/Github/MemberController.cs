@@ -10,12 +10,12 @@ using v1.Platform.Github;
 [EntityRbac(typeof(Member), Verbs = RbacVerb.All)]
 public class MemberController : IResourceController<Member>
 {
-    private readonly KubernetesClient _kubernetesClient;
-    private readonly ILogger<Member> _logger;
+    private readonly IKubernetesClient _kubernetesClient;
+    private readonly ILogger<MemberController> _logger;
 
     public MemberController(
-        KubernetesClient kubernetesClient,
-        ILogger<Member> logger
+        IKubernetesClient kubernetesClient,
+        ILogger<MemberController> logger
         )
     {
         _kubernetesClient = kubernetesClient;

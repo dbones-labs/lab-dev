@@ -12,12 +12,12 @@ using Team = v1.Platform.Github.Team;
 public class CollaboratorController : IResourceController<Collaborator>
 {
     private readonly IKubernetesClient _kubernetesClient;
-    private readonly IGitHubClient _gitHubClient;
+    private readonly GitHubClient _gitHubClient;
     private readonly ILogger<CollaboratorController> _logger;
 
     public CollaboratorController(
         IKubernetesClient kubernetesClient,
-        IGitHubClient gitHubClient,
+        GitHubClient gitHubClient,
         ILogger<CollaboratorController> logger)
     {
         _kubernetesClient = kubernetesClient;
@@ -29,9 +29,9 @@ public class CollaboratorController : IResourceController<Collaborator>
     {
         if (entity == null) return null;
 
-        var github = await _kubernetesClient.Get<Github>("github", entity.Spec.OrganizationNamespace);
-        if (github == null) throw new Exception("cannot find 'github' resource");
-        
+        var github = await _kubernetesClient.GetGithub(entity.Spec.OrganizationNamespace);
+        var token = await _kubernetesClient.GetSecret(github.Metadata.NamespaceProperty, github.Spec.Credentials);
+        if(!string.IsNullOrWhiteSpace(token)) _gitHubClient.Auth(token);
 
         _logger.LogInformation("reconciling collaborator: {name}", entity.Metadata.Name);
         
@@ -63,8 +63,9 @@ public class CollaboratorController : IResourceController<Collaborator>
     {
         if (entity == null) return;
 
-        var github = await _kubernetesClient.Get<Github>("github", entity.Spec.OrganizationNamespace);
-        if (github == null) throw new Exception("cannot find 'github' resource");
+        var github = await _kubernetesClient.GetGithub(entity.Spec.OrganizationNamespace);
+        var token = await _kubernetesClient.GetSecret(github.Metadata.NamespaceProperty, github.Spec.Credentials);
+        if(!string.IsNullOrWhiteSpace(token)) _gitHubClient.Auth(token);
         
         var spec = entity.Spec;
         var org = github.Spec.Organisation;

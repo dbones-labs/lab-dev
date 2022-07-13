@@ -7,7 +7,6 @@ using KubeOps.Operator.Entities.Annotations;
 
 
 [KubernetesEntity(Group = "lab.dev", ApiVersion = "v1")]
-[EntityScope(EntityScope.Cluster)]
 public class Member : CustomKubernetesEntity<MemberSpec,MemberStatus> { }
 
 public class MemberSpec

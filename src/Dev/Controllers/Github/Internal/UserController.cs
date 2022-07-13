@@ -12,12 +12,12 @@ using User = v1.Platform.Github.User;
 public class UserController :  IResourceController<User>
 {
     private readonly IKubernetesClient _kubernetesClient;
-    private readonly IGitHubClient _gitHubClient;
+    private readonly GitHubClient _gitHubClient;
     private readonly ILogger<UserController> _logger;
 
     public UserController(
         IKubernetesClient kubernetesClient, 
-        IGitHubClient gitHubClient,
+        GitHubClient gitHubClient,
         ILogger<UserController> logger)
     {
         _kubernetesClient = kubernetesClient;
@@ -30,11 +30,9 @@ public class UserController :  IResourceController<User>
         if (entity == null) return null;
         if (entity.Status.OrganisationStatus == OrganisationStatus.Member) return null;
         
-        var github = await _kubernetesClient.Get<Github>("github", entity.Metadata.NamespaceProperty);
-        if (github == null)
-        {
-            throw new Exception("cannot find 'github' resource");
-        }
+        var github = await _kubernetesClient.GetGithub(entity.Metadata.NamespaceProperty);
+        var token = await _kubernetesClient.GetSecret(github.Metadata.NamespaceProperty, github.Spec.Credentials);
+        if(!string.IsNullOrWhiteSpace(token)) _gitHubClient.Auth(token);
         
         //find the user (their account should already exist)
         if (string.IsNullOrWhiteSpace(entity.Status.GithubId))
@@ -73,8 +71,9 @@ public class UserController :  IResourceController<User>
     {
         if (entity == null) return;
         
-        var github = await _kubernetesClient.Get<Github>("github");
-        if (github == null) throw new Exception("cannot find 'github' resource");
+        var github = await _kubernetesClient.GetGithub(entity.Metadata.NamespaceProperty);
+        var token = await _kubernetesClient.GetSecret(github.Metadata.NamespaceProperty, github.Spec.Credentials);
+        if(!string.IsNullOrWhiteSpace(token)) _gitHubClient.Auth(token);
         
         
         var isMember = await _gitHubClient.Organization.Member.CheckMember(
