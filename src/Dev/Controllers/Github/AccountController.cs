@@ -1,27 +1,25 @@
 ﻿namespace Dev.Controllers.Github;
 
+using System.Reflection;
 using DotnetKubernetesClient;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
-using Octokit;
+using v1.Platform.Github;
 using Account = v1.Core.Account;
 using User = v1.Platform.Github.User;
 
 [EntityRbac(typeof(Account), Verbs = RbacVerb.All)]
 public class AccountController : IResourceController<Account>
 {
-    private readonly KubernetesClient _kubernetesClient;
-    private readonly GitHubClient _gitHubClient;
+    private readonly IKubernetesClient _kubernetesClient;
     private readonly ILogger<AccountController> _logger;
 
     public AccountController(
-        KubernetesClient kubernetesClient,
-        GitHubClient gitHubClient,
+        IKubernetesClient kubernetesClient,
         ILogger<AccountController> logger)
     {
         _kubernetesClient = kubernetesClient;
-        _gitHubClient = gitHubClient;
         _logger = logger;
     }
     
@@ -38,35 +36,74 @@ public class AccountController : IResourceController<Account>
         
         var user = await _kubernetesClient.Get<User>(name, @namespace);
         
-        //update the user, if needed.
-        if (user != null)
+  
+        if (user == null)
         {
-            if (user.Spec.Login == login) return null;
-            
-            user.Spec.Login = login;
-            await _kubernetesClient.Update(user);
+            //create user
+            user = new User
+            {
+                Metadata = new()
+                {
+                    Name = name,
+                    NamespaceProperty = @namespace,
+                    Labels = new Dictionary<string, string>()
+                    {
+                        { User.AccountLabel(), name },
+                        { User.LoginLabel(), login }
+                    }
+                },
 
-            return null;
+                Spec = new()
+                {
+                    Login = login
+                }
+            };
+
+            await _kubernetesClient.Create(user);
+        }
+        else
+        {
+            //update the user, if needed.
+            if (user.Spec.Login != login)
+            {
+                user.Spec.Login = login;
+                user.Metadata.Labels[User.LoginLabel()] = login;
+                await _kubernetesClient.Update(user);
+            }
         }
 
-        //create user
-        user = new User
-        {
-            Metadata = new()
-            {
-                Name = name,
-                NamespaceProperty = @namespace
-            },
-
-            Spec = new()
-            {
-                Login = login
-            }
-        };
-
-        await _kubernetesClient.Create(user);
+        //add membership to default team.
+        var github = await _kubernetesClient.GetGithub(entity.Metadata.NamespaceProperty);
         
-        //todo add membership to default teams.
+        var member = await _kubernetesClient.Get<TeamMember>(name, @namespace);
+        if (member == null)
+        {
+            member = new TeamMember()
+            {
+                Metadata = new()
+                {
+                    Name = name,
+                    NamespaceProperty = entity.Metadata.NamespaceProperty
+                },
+                Spec = new()
+                {
+                    Login = login,
+                    Team = github.Spec.GlobalTeam
+                }
+            };
+            
+            await _kubernetesClient.Create(member);
+        }
+        else
+        {
+            if (member.Spec.Login != login)
+            {
+                member.Spec.Login = login;
+                await _kubernetesClient.Update(member);
+            }
+        }
+        
+        
         return null;
     }
     

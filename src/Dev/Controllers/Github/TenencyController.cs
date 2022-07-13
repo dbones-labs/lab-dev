@@ -11,11 +11,11 @@ using v1.Platform.Github;
 [EntityRbac(typeof(Tenancy), Verbs = RbacVerb.All)]
 public class TenancyController : IResourceController<Tenancy>
 {
-    private readonly KubernetesClient _kubernetesClient;
+    private readonly IKubernetesClient _kubernetesClient;
     private readonly ILogger<TenancyController> _logger;
 
     public TenancyController(
-        KubernetesClient kubernetesClient,
+        IKubernetesClient kubernetesClient,
         ILogger<TenancyController> logger
         )
     {

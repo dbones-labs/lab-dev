@@ -6,6 +6,7 @@ using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
 using Octokit;
+using v1.Core;
 using Repository = v1.Platform.Github.Repository;
 
 
@@ -36,14 +37,15 @@ public class RepositoryController : IResourceController<Repository>
     {
         if (entity == null) return null;
         
-        var github = await _kubernetesClient.Get<Github>("github", entity.Spec.OrganizationNamespace);
-        if (github == null) throw new Exception("cannot find 'github' resource");
+        var github = await _kubernetesClient.GetGithub(entity.Spec.OrganizationNamespace);
+        var token = await _kubernetesClient.GetSecret(github.Metadata.NamespaceProperty, github.Spec.Credentials);
+        if(!string.IsNullOrWhiteSpace(token)) _gitHubClient.Auth(token);
         
         _logger.LogInformation("reconciling repository: {name}", entity.Metadata.Name);
         var meta = entity.Metadata;
         var spec = entity.Spec;
         var org = entity.Spec.OrganizationNamespace;
-        
+
         //ensure the repo exists and is update
         var repository = await _gitHubClient.Repository.Get(meta.NamespaceProperty, meta.Name);
         if (repository == null)
@@ -69,15 +71,20 @@ public class RepositoryController : IResourceController<Repository>
                 Private = spec.Visibility != Visibility.Public,
                 Visibility = spec.Visibility == Visibility.Public
                     ? RepositoryVisibility.Public
-                    : RepositoryVisibility.Private,
+                    : RepositoryVisibility.Private
             });
         }
-        
+
         if (entity.Status.Id == null)
         {
             entity.Status.Id = repository.Id;
         }
         
+        await EnsureLabel(repository, FireFighter.Activated());
+        await EnsureLabel(repository, FireFighter.Approved());
+        await EnsureLabel(repository, FireFighter.Completed());
+        await EnsureLabel(repository, FireFighter.Requested());
+
         var globalCollabName = Collab.GetCollabName(meta.Name, github.Spec.GlobalTeam);
         if (spec.Visibility == Visibility.Private)
         {
@@ -124,12 +131,22 @@ public class RepositoryController : IResourceController<Repository>
         return null;
     }
 
+    private async Task EnsureLabel(Octokit.Repository repository, string name)
+    {
+        var requestedLabel = await _gitHubClient.Issue.Labels.Get(repository.Id, name);
+        if (requestedLabel == null)
+        {
+            await _gitHubClient.Issue.Labels.Create(repository.Id, new NewLabel(name, "#1C2AA7"));
+        }
+    }
+
     public async Task DeletedAsync(Repository? entity)
     {
         if (entity == null) return;
 
-        var github = await _kubernetesClient.Get<Github>("github", entity.Metadata.NamespaceProperty);
-        if (github == null) throw new Exception("cannot find 'github' resource");
+        var github = await _kubernetesClient.GetGithub(entity.Spec.OrganizationNamespace);
+        var token = await _kubernetesClient.GetSecret(github.Metadata.NamespaceProperty, github.Spec.Credentials);
+        if(!string.IsNullOrWhiteSpace(token)) _gitHubClient.Auth(token);
 
         if (!entity.Status.Id.HasValue) return;
         var repositoryId = entity.Status.Id.Value;

@@ -11,12 +11,12 @@ using v1.Platform.Github;
 public class TeamMemberController :  IResourceController<TeamMember>
 {
     private readonly GitHubClient _gitHubClient;
-    private readonly KubernetesClient _kubernetesClient;
+    private readonly IKubernetesClient _kubernetesClient;
     private readonly ILogger<TeamMemberController> _logger;
 
     public TeamMemberController(
         GitHubClient gitHubClient,
-        KubernetesClient kubernetesClient,
+        IKubernetesClient kubernetesClient,
         ILogger<TeamMemberController> logger)
     {
         _gitHubClient = gitHubClient;
@@ -28,8 +28,9 @@ public class TeamMemberController :  IResourceController<TeamMember>
     {
         if (entity == null) return null;
 
-        var github = await _kubernetesClient.Get<Github>("github");
-        if (github == null) throw new Exception("cannot find 'github' resource");
+        var github = await _kubernetesClient.GetGithub(entity.Metadata.NamespaceProperty);
+        var token = await _kubernetesClient.GetSecret(github.Metadata.NamespaceProperty, github.Spec.Credentials);
+        if(!string.IsNullOrWhiteSpace(token)) _gitHubClient.Auth(token);
         
         var spec = entity.Spec;
         var org = github.Spec.Organisation;
@@ -50,8 +51,9 @@ public class TeamMemberController :  IResourceController<TeamMember>
     {
         if (entity == null) return;
 
-        var github = await _kubernetesClient.Get<Github>("github");
-        if (github == null) throw new Exception("cannot find 'github' resource");
+        var github = await _kubernetesClient.GetGithub(entity.Metadata.NamespaceProperty);
+        var token = await _kubernetesClient.GetSecret(github.Metadata.NamespaceProperty, github.Spec.Credentials);
+        if(!string.IsNullOrWhiteSpace(token)) _gitHubClient.Auth(token);
         
         var spec = entity.Spec;
         var org = github.Spec.Organisation;

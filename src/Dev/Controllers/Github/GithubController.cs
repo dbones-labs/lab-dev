@@ -13,17 +13,14 @@ using Repository = v1.Platform.Github.Repository;
 [EntityRbac(typeof(Github), Verbs = RbacVerb.All)]
 public class GithubController : IResourceController<Github>
 {
-    private readonly KubernetesClient _kubernetesClient;
-    private readonly GitHubClient _gitHubClient;
+    private readonly IKubernetesClient _kubernetesClient;
     private readonly ILogger<GithubController> _logger;
 
     public GithubController(
-        KubernetesClient kubernetesClient,
-        GitHubClient gitHubClient,
+        IKubernetesClient kubernetesClient,
         ILogger<GithubController> logger)
     {
         _kubernetesClient = kubernetesClient;
-        _gitHubClient = gitHubClient;
         _logger = logger;
     }
     

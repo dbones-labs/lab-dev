@@ -12,12 +12,12 @@ using Team = v1.Platform.Github.Team;
 public class TeamController :  IResourceController<Team>
 {
     private readonly GitHubClient _gitHubClient;
-    private readonly KubernetesClient _kubernetesClient;
+    private readonly IKubernetesClient _kubernetesClient;
     private readonly ILogger<TeamController> _logger;
 
     public TeamController(
         GitHubClient gitHubClient,
-        KubernetesClient kubernetesClient,
+        IKubernetesClient kubernetesClient,
         ILogger<TeamController> logger)
     {
         _gitHubClient = gitHubClient;
@@ -29,8 +29,9 @@ public class TeamController :  IResourceController<Team>
     {
         if (entity == null) return null;
         
-        var github = await _kubernetesClient.Get<Github>("github", entity.Metadata.NamespaceProperty);
-        if (github == null) throw new Exception("cannot find 'github' resource");
+        var github = await _kubernetesClient.GetGithub(entity.Metadata.NamespaceProperty);
+        var token = await _kubernetesClient.GetSecret(github.Metadata.NamespaceProperty, github.Spec.Credentials);
+        if(!string.IsNullOrWhiteSpace(token)) _gitHubClient.Auth(token);
         
         _logger.LogInformation("reconciling team: {name}", entity.Metadata.Name);
         
@@ -76,8 +77,9 @@ public class TeamController :  IResourceController<Team>
     {
         if (entity == null) return;
 
-        var github = await _kubernetesClient.Get<Github>("github");
-        if (github == null) throw new Exception("cannot find 'github' resource");
+        var github = await _kubernetesClient.GetGithub(entity.Metadata.NamespaceProperty);
+        var token = await _kubernetesClient.GetSecret(github.Metadata.NamespaceProperty, github.Spec.Credentials);
+        if(!string.IsNullOrWhiteSpace(token)) _gitHubClient.Auth(token);
         
         if (!entity.Status.Id.HasValue) return;
         await _gitHubClient.Organization.Team.Delete(entity.Status.Id.Value);

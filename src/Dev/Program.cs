@@ -1,4 +1,7 @@
+using DotnetKubernetesClient;
+using k8s.Models;
 using KubeOps.Operator;
+using Octokit;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +13,9 @@ var builder = WebApplication.CreateBuilder(args);
 //builder.Services.AddSwaggerGen();
 builder.Services.AddKubernetesOperator();
 //    .AddResourceAssembly(typeof(Program).Assembly);
+
+builder.Services.AddTransient(_ => new GitHubClient(new ProductHeaderValue("lab.dev")));
+builder.Services.AddTransient<IGitHubClient>(provider => provider.GetRequiredService<GitHubClient>());
 
 var app = builder.Build();
 
