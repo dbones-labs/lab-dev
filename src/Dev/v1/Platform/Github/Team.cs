@@ -15,6 +15,8 @@ public class Team : CustomKubernetesEntity<TeamSpec, TeamStatus>
     {
         return $"{GetTeamName(teamName)}-guest";
     }
+
+    public static string PlatformLabel() => "lab.dev/platformTeam";
 }
 
 public class TeamSpec

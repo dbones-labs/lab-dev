@@ -39,6 +39,7 @@ public class TenancyController : IResourceController<Tenancy>
                     Name = @namespace
                 }
             });
+            await _kubernetesClient.Create(ns);
         }
 
         var context = await _kubernetesClient.Get<TenancyContext>(contextName, @namespace);
@@ -75,4 +76,3 @@ public class TenancyController : IResourceController<Tenancy>
         await _kubernetesClient.Delete<V1Namespace>(@namespace);
     }
 }
-
