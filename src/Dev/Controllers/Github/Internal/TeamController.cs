@@ -1,11 +1,11 @@
-﻿namespace Dev.Controllers.Github;
+﻿namespace Dev.Controllers.Github.Internal;
 
+using Dev.v1.Platform.Github;
 using DotnetKubernetesClient;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
 using Octokit;
-using v1.Platform.Github;
 using Team = v1.Platform.Github.Team;
 
 [EntityRbac(typeof(Team), Verbs = RbacVerb.All)]

@@ -1,11 +1,11 @@
-﻿namespace Dev.Controllers.Github;
+﻿namespace Dev.Controllers.Github.Internal;
 
 using System.Text;
+using Dev.v1.Platform.Github;
 using DotnetKubernetesClient;
 using DotnetKubernetesClient.LabelSelectors;
 using k8s.Models;
 using Octokit;
-using v1.Platform.Github;
 using User = v1.Platform.Github.User;
 
 [Obsolete("need to refactor", false)]
