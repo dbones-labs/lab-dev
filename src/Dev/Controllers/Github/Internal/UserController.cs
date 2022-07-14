@@ -9,7 +9,7 @@ using v1.Platform.Github;
 using User = v1.Platform.Github.User;
 
 [EntityRbac(typeof(User), Verbs = RbacVerb.All)]
-public class UserController :  IResourceController<User>
+public class UserController  :  IResourceController<User>
 {
     private readonly IKubernetesClient _kubernetesClient;
     private readonly GitHubClient _gitHubClient;
@@ -43,6 +43,7 @@ public class UserController :  IResourceController<User>
 
             _logger.LogInformation("account: {name} - setup complete", entity.Metadata.Name);
             entity.Status.GithubId = githubUser.Id.ToString();
+            await _kubernetesClient.UpdateStatus(entity);
         }
         
         //confirm the invite state
@@ -52,7 +53,12 @@ public class UserController :  IResourceController<User>
 
         if (isMember)
         {
-            entity.Status.OrganisationStatus = OrganisationStatus.Member;
+            if (entity.Status.OrganisationStatus != OrganisationStatus.Member)
+            {
+                entity.Status.OrganisationStatus = OrganisationStatus.Member;
+                await _kubernetesClient.UpdateStatus(entity);
+            }
+            
             return null;
         }
 
@@ -61,8 +67,9 @@ public class UserController :  IResourceController<User>
             github.Spec.Organisation,
             entity.Spec.Login,
             new OrganizationMembershipUpdate { Role = MembershipRole.Member });
-
+        
         entity.Status.OrganisationStatus = OrganisationStatus.Invited;
+        await _kubernetesClient.UpdateStatus(entity);
 
         return null;
     }

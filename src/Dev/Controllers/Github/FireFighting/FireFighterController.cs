@@ -9,7 +9,7 @@ using Octokit;
 using v1.Core.Tenancies;
 
 [EntityRbac(typeof(FireFighter), Verbs = RbacVerb.All)]
-public class FireFighterController : IResourceController<FireFighter>
+public class FireFighterController //: IResourceController<FireFighter>
 {
     private readonly IKubernetesClient _kubernetesClient;
     private readonly GitHubClient _gitHubClient;

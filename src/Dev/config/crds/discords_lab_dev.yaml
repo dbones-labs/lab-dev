@@ -9,7 +9,7 @@ spec:
     listKind: DiscordList
     plural: discords
     singular: discord
-  scope: Cluster
+  scope: Namespaced
   versions:
   - name: v1
     schema:

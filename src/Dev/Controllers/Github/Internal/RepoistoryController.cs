@@ -20,12 +20,12 @@ using State = v1.Platform.Github.State;
 public class RepositoryController : IResourceController<Repository>
 {
     private readonly GitHubClient _gitHubClient;
-    private readonly KubernetesClient _kubernetesClient;
+    private readonly IKubernetesClient _kubernetesClient;
     private readonly ILogger<RepositoryController> _logger;
 
     public RepositoryController(
         GitHubClient gitHubClient,
-        KubernetesClient kubernetesClient,
+        IKubernetesClient kubernetesClient,
         ILogger<RepositoryController> logger)
     {
         _gitHubClient = gitHubClient;
@@ -47,7 +47,8 @@ public class RepositoryController : IResourceController<Repository>
         var org = entity.Spec.OrganizationNamespace;
 
         //ensure the repo exists and is update
-        var repository = await _gitHubClient.Repository.Get(meta.NamespaceProperty, meta.Name);
+        var repository = await HttpAssist.Get(()=> _gitHubClient.Repository.Get(github.Spec.Organisation, meta.Name));
+        
         if (repository == null)
         {
             var newRepository = new NewRepository(meta.Name)
@@ -61,29 +62,68 @@ public class RepositoryController : IResourceController<Repository>
                     ? RepositoryVisibility.Public
                     : RepositoryVisibility.Private,
             };
-            repository = await _gitHubClient.Repository.Create(newRepository);
+            repository = await _gitHubClient.Repository.Create(github.Spec.Organisation, newRepository);
         }
         else
         {
-            repository = await _gitHubClient.Repository.Edit(repository.Id, new RepositoryUpdate(repository.Name)
+            //it seems some of the values if applied to the same value is not allows
+            RepositoryUpdate? repoUpdate = null;
+            bool? isPrivate = null;
+            bool? isArchived = null;
+            RepositoryVisibility? setVisibility = null;
+            bool shouldUpdate = false;
+            
+            var expectedPrivate = spec.Visibility != Visibility.Public;
+            var shouldUpdatePrivate = repository.Private != expectedPrivate;
+            if (shouldUpdatePrivate)
             {
-                Archived = spec.State == State.Archived,
-                Private = spec.Visibility != Visibility.Public,
-                Visibility = spec.Visibility == Visibility.Public
-                    ? RepositoryVisibility.Public
-                    : RepositoryVisibility.Private
-            });
+                isPrivate = expectedPrivate;
+                shouldUpdate = true;
+            }
+
+            var expectedArchived = spec.State == State.Archived;
+            var shouldUpdateArchived = repository.Archived != expectedArchived;
+            if (shouldUpdateArchived)
+            {
+                isArchived = expectedArchived;
+                shouldUpdate = true;
+            }
+            
+            var expectedVisibility = spec.Visibility == Visibility.Public
+                ? RepositoryVisibility.Public
+                : RepositoryVisibility.Private;
+            var shouldUpdateVisibility = repository.Visibility != expectedVisibility;
+            if (shouldUpdateVisibility)
+            {
+                setVisibility = expectedVisibility;
+                shouldUpdate = true;
+            }
+
+            if (shouldUpdate)
+            {
+                repoUpdate = new RepositoryUpdate(repository.Name)
+                {
+                    Private = isPrivate,
+                    Archived = isArchived,
+                    Visibility = setVisibility
+                    
+                };
+                repository = await _gitHubClient.Repository.Edit(repository.Id, repoUpdate);
+            }
         }
 
         if (entity.Status.Id == null)
         {
             entity.Status.Id = repository.Id;
         }
-        
-        await EnsureLabel(repository, FireFighter.Activated());
-        await EnsureLabel(repository, FireFighter.Approved());
-        await EnsureLabel(repository, FireFighter.Requested());
 
+        if (entity.Spec.Type == Type.System)
+        {
+            await EnsureLabel(repository, FireFighter.Activated());
+            await EnsureLabel(repository, FireFighter.Approved());
+            await EnsureLabel(repository, FireFighter.Requested());
+        }
+        
         var globalCollabName = Collab.GetCollabName(meta.Name, github.Spec.GlobalTeam);
         if (spec.Visibility == Visibility.Private)
         {
@@ -132,10 +172,10 @@ public class RepositoryController : IResourceController<Repository>
 
     private async Task EnsureLabel(Octokit.Repository repository, string name)
     {
-        var requestedLabel = await _gitHubClient.Issue.Labels.Get(repository.Id, name);
+        var requestedLabel = await HttpAssist.Get(()=> _gitHubClient.Issue.Labels.Get(repository.Id, name));
         if (requestedLabel == null)
         {
-            await _gitHubClient.Issue.Labels.Create(repository.Id, new NewLabel(name, "#1C2AA7"));
+            await _gitHubClient.Issue.Labels.Create(repository.Id, new NewLabel(name, "1C2AA7"));
         }
     }
 

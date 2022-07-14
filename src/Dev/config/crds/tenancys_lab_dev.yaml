@@ -9,7 +9,7 @@ spec:
     listKind: TenancyList
     plural: tenancys
     singular: tenancy
-  scope: Cluster
+  scope: Namespaced
   versions:
   - name: v1
     schema:

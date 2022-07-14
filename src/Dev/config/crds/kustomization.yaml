@@ -1,13 +1,21 @@
 commonLabels:
   operator-element: crd
 resources:
-- ranchers_lab_dev.yaml
-- members_lab_dev.yaml
-- organisations_lab_dev.yaml
-- accounts_lab_dev.yaml
-- zones_lab_dev.yaml
 - discords_lab_dev.yaml
-- tenancys_lab_dev.yaml
+- collaborators_github_internal_lab_dev.yaml
+- organizations_lab_dev.yaml
+- repositorys_github_internal_lab_dev.yaml
+- accounts_lab_dev.yaml
+- members_lab_dev.yaml
+- teams_github_internal_lab_dev.yaml
 - githubs_lab_dev.yaml
+- users_github_internal_lab_dev.yaml
+- firefighters_lab_dev.yaml
+- tenancycontexts_internal_lab_dev.yaml
+- zones_lab_dev.yaml
+- projects_internal_lab_dev.yaml
+- teammembers_github_internal_lab_dev.yaml
+- ranchers_lab_dev.yaml
+- tenancys_lab_dev.yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization

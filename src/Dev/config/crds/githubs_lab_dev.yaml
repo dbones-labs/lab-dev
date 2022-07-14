@@ -9,7 +9,7 @@ spec:
     listKind: GithubList
     plural: githubs
     singular: github
-  scope: Cluster
+  scope: Namespaced
   versions:
   - additionalPrinterColumns:
     - jsonPath: .spec.organisation
@@ -35,6 +35,10 @@ spec:
                   namespaceProperty:
                     type: string
                 type: object
+              id:
+                format: int32
+                nullable: true
+                type: integer
             type: object
           spec:
             description: Specification of the kubernetes object.
@@ -42,7 +46,6 @@ spec:
               organisation:
                 type: string
               credentials:
-                nullable: true
                 type: string
               archive:
                 type: boolean
@@ -56,6 +59,8 @@ spec:
                 type: string
               archiveTeam:
                 type: string
+              cleanUp:
+                type: boolean
             required:
             - organisation
             - credentials
