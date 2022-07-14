@@ -21,7 +21,7 @@ public class AccountController : IResourceController<Account>
         {
             return Task.FromResult((ResourceControllerResult?)null);
         }
-        _logger.LogInformation("postgres account controller {name}", entity.Metadata.Name);
+        _logger.LogInformation("postgres account controller {Name}", entity.Metadata.Name);
         return Task.FromResult((ResourceControllerResult?)null);
     }
 }

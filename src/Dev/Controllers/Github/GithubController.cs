@@ -5,7 +5,6 @@ using k8s.Models;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
-using Octokit;
 using v1.Platform.Github;
 using Organization = v1.Core.Organization;
 using Repository = v1.Platform.Github.Repository;
@@ -47,6 +46,8 @@ public class GithubController : IResourceController<Github>
         {
             orgRepo = new()
             {
+                ApiVersion = "github.internal.lab.dev/v1",
+                Kind = "Repository",
                 Metadata = new()
                 {
                     Name = @namespace,
@@ -62,15 +63,26 @@ public class GithubController : IResourceController<Github>
                 }
             };
 
-            await _kubernetesClient.Create(orgRepo);
+            try
+            {
+                await _kubernetesClient.Create(orgRepo);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+            
         }
         
         var globalTeamName = entity.Spec.GlobalTeam;
-        var globalTeam = await _kubernetesClient.Get<Repository>(globalTeamName, orgNs);
+        var globalTeam = await _kubernetesClient.Get<Team>(globalTeamName, orgNs);
         if (globalTeam == null)
         {
-            await _kubernetesClient.Create(new Repository
+            await _kubernetesClient.Create(new Team
             {
+                ApiVersion = "github.internal.lab.dev/v1",
+                Kind = "Team",
                 Metadata = new()
                 {
                     Name = globalTeamName,
@@ -79,20 +91,20 @@ public class GithubController : IResourceController<Github>
                 
                 Spec = new()
                 {
-                    State = State.Active,
                     Type = Type.System,
-                    Visibility = Visibility.Private,
-                    //Owner = "generated"
+                    Visibility = Visibility.Private
                 }
             });
         }
         
         var archivedTeamName = entity.Spec.ArchiveTeam;
-        var archivedTeam = await _kubernetesClient.Get<Repository>(archivedTeamName, orgNs);
+        var archivedTeam = await _kubernetesClient.Get<Team>(archivedTeamName, orgNs);
         if (archivedTeam == null)
         {
-            await _kubernetesClient.Create(new Repository
+            await _kubernetesClient.Create(new Team
             {
+                ApiVersion = "github.internal.lab.dev/v1",
+                Kind = "Team",
                 Metadata = new()
                 {
                     Name = archivedTeamName,
@@ -101,10 +113,8 @@ public class GithubController : IResourceController<Github>
 
                 Spec = new()
                 {
-                    State = State.Active,
                     Type = Type.System,
-                    Visibility = Visibility.Private,
-                    //Owner = "generated"
+                    Visibility = Visibility.Private
                 }
             });
         }

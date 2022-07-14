@@ -1,5 +1,6 @@
 ﻿namespace Dev.Controllers.Github.Internal;
 
+using System.Runtime.CompilerServices;
 using DotnetKubernetesClient;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
@@ -8,7 +9,7 @@ using Octokit;
 using v1.Platform.Github;
 
 [EntityRbac(typeof(TeamMember), Verbs = RbacVerb.All)]
-public class TeamMemberController :  IResourceController<TeamMember>
+public class TeamMemberController  :  IResourceController<TeamMember>
 {
     private readonly GitHubClient _gitHubClient;
     private readonly IKubernetesClient _kubernetesClient;
@@ -35,14 +36,18 @@ public class TeamMemberController :  IResourceController<TeamMember>
         var spec = entity.Spec;
         var org = github.Spec.Organisation;
         
-        var team = await _kubernetesClient.Get<Dev.v1.Platform.Github.Team>(spec.Team, org);
+        var team = await HttpAssist.Get(() => _kubernetesClient.Get<Dev.v1.Platform.Github.Team>(spec.Team, github.Metadata.NamespaceProperty));
         if (team == null) throw new Exception($"cannot find team {spec.Team}");
         if (!team.Status.Id.HasValue) throw new Exception($"missing id for team {spec.Team}");
 
-        await _gitHubClient.Organization.Team.AddOrEditMembership(
-            team.Status.Id.Value, 
-            spec.Login, 
-            new UpdateTeamMembership(TeamRole.Member));
+        var membershipDetails = await HttpAssist.Get(() => _gitHubClient.Organization.Team.GetMembershipDetails(team.Status.Id.Value, spec.Login));
+        if (membershipDetails == null)
+        {
+            await _gitHubClient.Organization.Team.AddOrEditMembership(
+                team.Status.Id.Value, 
+                spec.Login, 
+                new UpdateTeamMembership(TeamRole.Member));
+        }
 
         return null;
     }

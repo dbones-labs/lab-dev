@@ -9,7 +9,7 @@ using v1.Platform.Github;
 using Team = v1.Platform.Github.Team;
 
 [EntityRbac(typeof(Collaborator), Verbs = RbacVerb.All)]
-public class CollaboratorController : IResourceController<Collaborator>
+public class CollaboratorController  : IResourceController<Collaborator>
 {
     private readonly IKubernetesClient _kubernetesClient;
     private readonly GitHubClient _gitHubClient;
@@ -38,7 +38,7 @@ public class CollaboratorController : IResourceController<Collaborator>
         var spec = entity.Spec;
         var org = github.Spec.Organisation;
 
-        var team = await _kubernetesClient.Get<Team>(spec.Team, org);
+        var team = await _kubernetesClient.Get<Team>(spec.Team, github.Metadata.NamespaceProperty);
         if (team == null) throw new Exception($"cannot find team {spec.Team}");
         if (!team.Status.Id.HasValue) throw new Exception($"missing id for team {spec.Team}");
 

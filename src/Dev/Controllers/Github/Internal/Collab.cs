@@ -21,6 +21,8 @@ public static class Collab
         var name = GetCollabName(repositoryName, teamName);
         return new Collaborator()
         {
+            ApiVersion = "github.internal.lab.dev/v1",
+            Kind = "Collaborator",
             Metadata = new()
             {
                 Name = name,
@@ -87,6 +89,23 @@ public static class GithubClientExtensions
     {
         var tokenAuth = new Credentials(token);
         client.Credentials = tokenAuth;
+    }
+}
+
+public static class HttpAssist
+{
+    public static async Task<T?> Get<T>(Func<Task<T>> call) where T : class
+    {
+        try
+        {
+            var result = await call.Invoke();
+            return result;
+        }
+        catch (NotFoundException notFound)
+        {
+            return null;
+        }
+        
     }
 }
 

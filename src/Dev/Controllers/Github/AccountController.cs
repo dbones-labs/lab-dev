@@ -42,6 +42,8 @@ public class AccountController : IResourceController<Account>
             //create user
             user = new User
             {
+                ApiVersion = "github.internal.lab.dev/v1", 
+                Kind = "User",
                 Metadata = new()
                 {
                     Name = name,
@@ -80,6 +82,8 @@ public class AccountController : IResourceController<Account>
         {
             member = new TeamMember()
             {
+                ApiVersion = "github.internal.lab.dev/v1",
+                Kind = "TeamMember",
                 Metadata = new()
                 {
                     Name = name,

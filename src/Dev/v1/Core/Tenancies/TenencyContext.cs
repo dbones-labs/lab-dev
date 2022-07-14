@@ -2,6 +2,7 @@
 
 using k8s.Models;
 using KubeOps.Operator.Entities;
+using KubeOps.Operator.Entities.Annotations;
 
 [KubernetesEntity(Group = "internal.lab.dev", ApiVersion = "v1")]
 public class TenancyContext : CustomKubernetesEntity<TenancyContextSpec, TenancyContextStatus>
@@ -14,7 +15,7 @@ public class TenancyContext : CustomKubernetesEntity<TenancyContextSpec, Tenancy
 
 public class TenancyContextSpec
 {
-    public string OrganizationNamespace { get; set; }
+    [Required] public string OrganizationNamespace { get; set; } = string.Empty;
 }
 
 public class TenancyContextStatus { }

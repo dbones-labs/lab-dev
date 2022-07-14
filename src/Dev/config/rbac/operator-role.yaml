@@ -5,9 +5,18 @@ metadata:
 rules:
 - apiGroups:
   - lab.dev
+  - github.internal.lab.dev
   - coordination.k8s.io
   resources:
   - accounts
+  - teams
+  - repositorys
+  - teammembers
+  - tenancys
+  - githubs
+  - members
+  - users
+  - collaborators
   - leases
   verbs:
   - '*'
@@ -31,6 +40,70 @@ rules:
   - lab.dev
   resources:
   - accounts/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - github.internal.lab.dev
+  resources:
+  - teams/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - github.internal.lab.dev
+  resources:
+  - repositorys/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - github.internal.lab.dev
+  resources:
+  - teammembers/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - lab.dev
+  resources:
+  - tenancys/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - lab.dev
+  resources:
+  - githubs/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - lab.dev
+  resources:
+  - members/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - github.internal.lab.dev
+  resources:
+  - users/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - github.internal.lab.dev
+  resources:
+  - collaborators/status
   verbs:
   - get
   - patch

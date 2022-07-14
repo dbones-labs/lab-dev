@@ -9,7 +9,7 @@ using Octokit;
 using Team = v1.Platform.Github.Team;
 
 [EntityRbac(typeof(Team), Verbs = RbacVerb.All)]
-public class TeamController :  IResourceController<Team>
+public class TeamController  :  IResourceController<Team>
 {
     private readonly GitHubClient _gitHubClient;
     private readonly IKubernetesClient _kubernetesClient;
@@ -24,25 +24,25 @@ public class TeamController :  IResourceController<Team>
         _kubernetesClient = kubernetesClient;
         _logger = logger;
     }
-    
+
     public async Task<ResourceControllerResult?> ReconcileAsync(Team? entity)
     {
         if (entity == null) return null;
-        
+
         var github = await _kubernetesClient.GetGithub(entity.Metadata.NamespaceProperty);
         var token = await _kubernetesClient.GetSecret(github.Metadata.NamespaceProperty, github.Spec.Credentials);
-        if(!string.IsNullOrWhiteSpace(token)) _gitHubClient.Auth(token);
-        
+        if (!string.IsNullOrWhiteSpace(token)) _gitHubClient.Auth(token);
+
         _logger.LogInformation("reconciling team: {name}", entity.Metadata.Name);
-        
+
         var meta = entity.Metadata;
         var spec = entity.Spec;
         var status = entity.Status;
         var org = github.Spec.Organisation;
-        
+
         Octokit.Team? team = null;
-        
-        if (status.Id.HasValue) team = await _gitHubClient.Organization.Team.Get(status.Id.Value);
+
+        if (status.Id.HasValue) team = await HttpAssist.Get(() => _gitHubClient.Organization.Team.Get(status.Id.Value));
         if (team == null)
         {
             var teams = await _gitHubClient.Organization.Team.GetAll(org);
@@ -56,21 +56,48 @@ public class TeamController :  IResourceController<Team>
                 Description = spec.Description,
                 Privacy = spec.Visibility == Visibility.Private ? TeamPrivacy.Secret : TeamPrivacy.Closed
             });
-
-            status.Id = team.Id;
         }
-        
+
         else
         {
-            await _gitHubClient.Organization.Team.Update(team.Id, new UpdateTeam(meta.Name)
+            string? updateDescription = null;
+            TeamPrivacy? updateTeamPrivacy = null;
+            bool shouldUpdate = false;
+
+            var expectedDescription = entity.Spec.Description;
+            var shouldUpdateDescription = team.Description != expectedDescription;
+            if (shouldUpdateDescription)
             {
-                Description = spec.Description,
-                Privacy  = spec.Visibility == Visibility.Private ? TeamPrivacy.Secret : TeamPrivacy.Closed
-            });
+                updateDescription = expectedDescription;
+                shouldUpdate = true;
+            }
+
+            var expectedTeamPrivacy = spec.Visibility == Visibility.Private ? TeamPrivacy.Secret : TeamPrivacy.Closed;
+            var shouldUpdateTeamPrivacy = team.Privacy != expectedTeamPrivacy;
+            if (shouldUpdateTeamPrivacy)
+            {
+                updateTeamPrivacy = expectedTeamPrivacy;
+                shouldUpdate = true;
+            }
+
+            if (shouldUpdate)
+            {
+                team = await _gitHubClient.Organization.Team.Create(org, new NewTeam(meta.Name)
+                {
+                    Description = updateDescription,
+                    Privacy = updateTeamPrivacy
+                });
+            }
+        }
+
+        if (!status.Id.HasValue)
+        {
+            status.Id = team.Id;
+            await _kubernetesClient.UpdateStatus(entity);
         }
 
         return null;
-    }
+}
 
 
     public async Task DeletedAsync(Team? entity)
