@@ -61,7 +61,7 @@ possible repo's
 
 ```yaml
 
-# /org [REPO] <- manually created, but then this will assume ownership
+# /lab [REPO] <- manually created, but then this will assume ownership
 #   dbones-labs.yaml
 #
 #   /platform-services
@@ -186,22 +186,31 @@ spec:
 ---
 
 # =========================================================
-#     users
+#     Accounts (users)
 # =========================================================
 
+
 apiVersion: lab.dev/v1
-kind: user
+kind: Account
 metadata:
-  name: dbones
+  name: sammi
   namespace: lab
-  labels:
-    lab.dev/verison: 1
 spec:
   externalAccounts:
-    - provider: github
-      id: d_bones
-    - provider: discord
-      id: 726638408860172328
+  - id: 5ammi-b
+    provider: github
+
+
+apiVersion: lab.dev/v1
+kind: Account
+metadata:
+  name: bob
+  namespace: lab
+spec:
+  externalAccounts:
+  - id: b0b-b
+    provider: github
+    
 
 # each user/login, we will need to keep some ids for different accounts (which they create)
 # the scripts will create rancher, databases, vault, etc
@@ -214,15 +223,15 @@ spec:
 
 
 
-# /frontier
-#   cluster-aqua.yaml
+# /frontier <--- zone repo
+#   kubernetes-aqua.yaml
 #   postgres-spike.yaml
 #   postgres-goku.yaml
 #   rabbitmq-asuna.yaml
 
 
 apiVersion: lab.dev/v1
-kind: zone
+kind: Zone
 metadata:
   name: frontier
   namespace: lab
@@ -238,36 +247,36 @@ spec:
 # rancher local is the cluster-local, and does not need to be created.
 
 apiVersion: lab.dev/v1
-kind: cluster
+kind: Kubernetes
 metadata:
   name: aqua
-  namespace: zone-frontier
+  namespace: frontier
   labels:
     lab.dev/verison: 1
 
 ---
 
 apiVersion: lab.dev/v1
-kind: postgres
+kind: Postgres
 metadata:
-  name: postgres-spike
-  namespace: zone-frontier
+  name: spike
+  namespace: frontier
   labels:
     lab.dev/verison: 1
 spec:
-  credentials: postgres-spike
+  credentials: spike
 
 ---
 
 apiVersion: lab.dev/v1
-kind: rabbitmq
+kind: Rabbitmq
 metadata:
-  name: rabbitmq-asuna
-  namespace: zone-frontier
+  name: asuna
+  namespace: frontier
   labels:
     lab.dev/verison: 1
 spec:
-  credentials: rabbitmq-asuna
+  credentials: asuna
 
 ---
 
@@ -275,8 +284,17 @@ spec:
 #     Tenencies
 # =========================================================
 
+
+# /galaxy [REPO] <- this is created from the above org repo - Tenancy
+#   /members
+#     dbones.yaml
+#   /services
+#     billing.yaml
+#  /libraries
+#    core.yaml
+
 apiVersion: lab.dev/v1
-kind: tenancy
+kind: Tenancy
 metadata:
   name: galaxy
   namespace: lab
@@ -292,10 +310,10 @@ spec:
 ---
 
 apiVersion: lab.dev/v1
-kind: member
+kind: Member
 metadata:
-  name: member-platform-dbones
-  namespace: tenency-platform
+  name: dbones
+  namespace: galaxy
   labels:
     lab.dev/verison: 1
 spec:
@@ -312,17 +330,20 @@ spec:
 # =========================================================
 
 apiVersion: lab.dev/v1
-kind: service
+kind: Service
 metadata:
   name: billing
-  namespace: tenancy-galaxy
+  namespace: galaxy
   labels:
     lab.dev/verison: 1
 spec:
   zones:
     - name: frontier
-      postgres: postgres-spike
-      rabbit: rabbitmq-asuna
+      components:
+        - name: spike # this will create a db and credentials
+          provider: postgres
+        - name: asuna
+          provier: rabbitmq
     - name: zone-apex
       # entries here.
   visibility: internal # public and private
@@ -335,10 +356,10 @@ spec:
 ---
 
 apiVersion: lab.dev/v1
-kind: library
+kind: Package
 metadata:
   name: auditable
-  namespace: tenancy-libraries
+  namespace: libraries
   labels:
     lab.dev/verison: 1
 spec:
@@ -346,7 +367,6 @@ spec:
 
 ---
 ```
-
 
 
 

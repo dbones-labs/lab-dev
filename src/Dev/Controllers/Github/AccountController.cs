@@ -118,6 +118,7 @@ public class AccountController : IResourceController<Account>
         var name = entity.Metadata.Name;
         var @namespace = entity.Metadata.NamespaceProperty;
 
+        await _kubernetesClient.Delete<TeamMember>(name, @namespace);
         await _kubernetesClient.Delete<User>(name, @namespace);
     }
 }

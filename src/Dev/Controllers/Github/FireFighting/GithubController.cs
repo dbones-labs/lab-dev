@@ -11,7 +11,7 @@ using v1.Platform.Github;
 using Repository = Octokit.Repository;
 
 [EntityRbac(typeof(Github), Verbs = RbacVerb.All)]
-public class GithubController //: IResourceController<Github>
+public class GithubController : IResourceController<Github>
 {
     private readonly IKubernetesClient _kubernetesClient;
     private readonly GitHubClient _gitHubClient;

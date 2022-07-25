@@ -7,10 +7,7 @@ using KubeOps.Operator.Entities.Annotations;
 [KubernetesEntity(Group = "internal.lab.dev", ApiVersion = "v1")]
 public class TenancyContext : CustomKubernetesEntity<TenancyContextSpec, TenancyContextStatus>
 {
-    public static string GetName()
-    {
-        return "context";
-    }
+    public static string GetName() => "context";
 }
 
 public class TenancyContextSpec

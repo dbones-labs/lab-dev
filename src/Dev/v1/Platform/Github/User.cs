@@ -7,8 +7,8 @@ using KubeOps.Operator.Entities.Annotations;
 [KubernetesEntity(Group = "github.internal.lab.dev", ApiVersion = "v1")]
 public class User : CustomKubernetesEntity<UserSpec, UserStatus>
 {
-    public static string AccountLabel() => "lab.dev/account";
-    public static string LoginLabel() => "lab.dev/login";
+    public static string AccountLabel() => "lab.dev/account"; 
+    public static string LoginLabel() => "github.lab.dev/login";
 }
 
 public class UserSpec

@@ -34,7 +34,7 @@ public class CollaboratorController  : IResourceController<Collaborator>
         if(!string.IsNullOrWhiteSpace(token)) _gitHubClient.Auth(token);
 
         _logger.LogInformation("reconciling collaborator: {name}", entity.Metadata.Name);
-        
+
         var spec = entity.Spec;
         var org = github.Spec.Organisation;
 

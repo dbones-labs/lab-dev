@@ -15,9 +15,7 @@ public class OrganizationSpec
     public int RetainFor { get; set; } = 604800;
 
     public bool ProductionAccessWorkFlow { get; set; } = true;
-    public string ProductionName { get; set; } = "production";
-    
-
+    //public string ProductionName { get; set; } = "production";
 }
 
 public class OrganizationStatus
