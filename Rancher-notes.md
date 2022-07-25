@@ -14,7 +14,7 @@ https://fleet.rancher.io/troubleshooting/#migrate-the-local-cluster-to-the-fleet
 apiVersion: fleet.cattle.io/v1alpha1
 kind: GitRepo
 metadata:
-  name: lab
+  name: lab # org namespace name
   annotations:
     field.cattle.io/description: org repository
   namespace: fleet-local
@@ -152,6 +152,19 @@ rules:
 ### serviceacount
 
 per tenancy, per cluster
+
+
+```yaml
+apiVersion: v1
+automountServiceAccountToken: false
+kind: ServiceAccount
+metadata:
+  name: lab
+  namespace: cattle-fleet-system
+```
+
+
+
 
 ### bindings
 
