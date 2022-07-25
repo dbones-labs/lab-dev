@@ -27,8 +27,8 @@ public class TenancyController : IResourceController<Tenancy>
     public async Task<ResourceControllerResult?> ReconcileAsync(Tenancy? entity)
     {
         if (entity == null) return null;
-        
-        var @namespace = Tenancy.GetNamespaceName(entity.Metadata.Name);
+
+        var @namespace = entity.Metadata.Name; //Tenancy.GetNamespaceName(entity.Metadata.Name);
         var organisation = entity.Metadata.NamespaceProperty;
         var teamName = Team.GetTeamName(entity.Metadata.Name);
         var guestTeamName = Team.GetGuestTeamName(entity.Metadata.Name);
@@ -156,8 +156,8 @@ public class TenancyController : IResourceController<Tenancy>
     public async Task DeletedAsync(Tenancy? entity)
     {
         if (entity == null) return;
-        
-        var @namespace = Tenancy.GetNamespaceName(entity.Metadata.Name);
+
+        var @namespace = entity.Metadata.Name;   //Tenancy.GetNamespaceName(entity.Metadata.Name);
         var organisation = entity.Metadata.NamespaceProperty;
         var teamName = Team.GetTeamName(entity.Metadata.Name);
         var guestTeamName = Team.GetGuestTeamName(entity.Metadata.Name);

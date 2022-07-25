@@ -9,10 +9,8 @@ public class Rancher : CustomKubernetesEntity<RancherSpec,  RancherStatus> { }
 
 public class RancherSpec
 {
-    [Required]
-    public string? Url { get; set; }
-    [Required]
-    public string? Credentials { get; set; }
+    [Required] public string? Url { get; set; }
+    [Required] public string? Credentials { get; set; }
 }
 
 public class RancherStatus

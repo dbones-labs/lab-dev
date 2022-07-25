@@ -27,10 +27,10 @@ public class MemberController : IResourceController<Member>
     {
         if (entity == null) return null;
 
-        var baseName = Tenancy.GetBaseName(entity.Metadata.NamespaceProperty);
+        var baseName = entity.Metadata.NamespaceProperty;
         var teamName = entity.Spec.Role == MemberRole.Guest
-            ? Team.GetTeamName(baseName)
-            : Team.GetGuestTeamName(baseName);
+            ? Team.GetGuestTeamName(baseName)
+            : Team.GetTeamName(baseName);
 
         var entryName = TeamMember.GetName(teamName, entity.Spec.Account);
 
@@ -68,10 +68,10 @@ public class MemberController : IResourceController<Member>
     {
         if (entity == null) return;
         
-        var baseName = Tenancy.GetBaseName(entity.Metadata.NamespaceProperty);
+        var baseName = entity.Metadata.NamespaceProperty;
         var teamName = entity.Spec.Role == MemberRole.Guest
-            ? Team.GetTeamName(baseName)
-            : Team.GetGuestTeamName(baseName);
+            ? Team.GetGuestTeamName(baseName)
+            : Team.GetTeamName(baseName);
 
         var entryName = TeamMember.GetName(teamName, entity.Spec.Account);
 

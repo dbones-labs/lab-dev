@@ -1,11 +1,11 @@
-﻿namespace Dev.Controllers.Core;
+﻿namespace Dev.Controllers.Rancher;
 
+using Dev.v1.Core;
 using DotnetKubernetesClient;
 using k8s.Models;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
-using v1.Core;
 
 [EntityRbac(typeof(Tenancy), Verbs = RbacVerb.All)]
 public class TenancyController : IResourceController<Tenancy>
@@ -27,7 +27,7 @@ public class TenancyController : IResourceController<Tenancy>
         if (entity == null) return null;
 
         var contextName = TenancyContext.GetName();
-        var @namespace = Tenancy.GetNamespaceName(entity.Metadata.Name);
+        var @namespace = entity.Metadata.Name; // //Tenancy.GetNamespaceName(entity.Metadata.Name);
         
         var ns = await _kubernetesClient.Get<V1Namespace>(@namespace);
         if (ns == null)
@@ -70,7 +70,7 @@ public class TenancyController : IResourceController<Tenancy>
         if (entity == null) return;
         
         var contextName = TenancyContext.GetName();
-        var @namespace = Tenancy.GetNamespaceName(entity.Metadata.Name);
+        var @namespace = entity.Metadata.Name;
 
         await _kubernetesClient.Delete<TenancyContext>(contextName, @namespace);
         await _kubernetesClient.Delete<V1Namespace>(@namespace);

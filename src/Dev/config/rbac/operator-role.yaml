@@ -4,19 +4,21 @@ metadata:
   name: operator-role
 rules:
 - apiGroups:
-  - lab.dev
   - github.internal.lab.dev
+  - lab.dev
   - coordination.k8s.io
   resources:
-  - accounts
-  - teams
-  - repositorys
-  - teammembers
-  - tenancys
-  - githubs
-  - members
-  - users
   - collaborators
+  - accounts
+  - tenancys
+  - teammembers
+  - users
+  - githubs
+  - repositorys
+  - teams
+  - firefighters
+  - ranchers
+  - members
   - leases
   verbs:
   - '*'
@@ -37,6 +39,14 @@ rules:
   - get
   - list
 - apiGroups:
+  - github.internal.lab.dev
+  resources:
+  - collaborators/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - lab.dev
   resources:
   - accounts/status
@@ -45,9 +55,33 @@ rules:
   - patch
   - update
 - apiGroups:
+  - lab.dev
+  resources:
+  - tenancys/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - github.internal.lab.dev
   resources:
-  - teams/status
+  - teammembers/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - github.internal.lab.dev
+  resources:
+  - users/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - lab.dev
+  resources:
+  - githubs/status
   verbs:
   - get
   - patch
@@ -63,7 +97,7 @@ rules:
 - apiGroups:
   - github.internal.lab.dev
   resources:
-  - teammembers/status
+  - teams/status
   verbs:
   - get
   - patch
@@ -71,7 +105,7 @@ rules:
 - apiGroups:
   - lab.dev
   resources:
-  - tenancys/status
+  - firefighters/status
   verbs:
   - get
   - patch
@@ -79,7 +113,7 @@ rules:
 - apiGroups:
   - lab.dev
   resources:
-  - githubs/status
+  - ranchers/status
   verbs:
   - get
   - patch
@@ -88,22 +122,6 @@ rules:
   - lab.dev
   resources:
   - members/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - github.internal.lab.dev
-  resources:
-  - users/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - github.internal.lab.dev
-  resources:
-  - collaborators/status
   verbs:
   - get
   - patch
