@@ -1,12 +1,11 @@
 ﻿namespace Dev.External.Rancher;
 
-using DotnetKubernetesClient.Entities;
 using k8s.Models;
 using KubeOps.Operator.Entities;
 using KubeOps.Operator.Entities.Annotations;
 
 [IgnoreEntity]
-[KubernetesEntity(Group = "cattle.test", ApiVersion = "v3")]
+[KubernetesEntity(Group = "management.cattle.io", ApiVersion = "v3")]
 public class Project : CustomKubernetesEntity<ProjectSpec, ProjectStatus>
 {
 }

@@ -4,6 +4,7 @@ using System.Text;
 using Dev.v1.Platform.Github;
 using DotnetKubernetesClient;
 using DotnetKubernetesClient.LabelSelectors;
+using k8s;
 using k8s.Models;
 using Octokit;
 using User = v1.Platform.Github.User;
@@ -79,6 +80,51 @@ public static class KubernetesClientExtensions
         
         var value = Encoding.UTF8.GetString(raw);
         return value;
+    }
+
+    public static async Task<T> Ensure<T>(
+        this IKubernetesClient client, 
+        Func<T> newItem, 
+        string name, 
+        string? @namespace = null) 
+        where T : class, IKubernetesObject<V1ObjectMeta>
+    {
+        var resource = await client.Get<T>(name, @namespace);
+        if (resource != null) return resource;
+
+        resource = await client.Create(newItem, name, @namespace);
+        return resource;
+    }
+    
+    public static async Task<T> Create<T>(this IKubernetesClient client, Func<T> newItem, string name, string? @namespace = null) where T : class, IKubernetesObject<V1ObjectMeta>
+    {
+        var resource = newItem();
+        resource.Metadata ??= new V1ObjectMeta();
+        var meta = resource.Metadata;
+
+        meta.Name ??= name;
+        meta.NamespaceProperty ??= @namespace;
+
+        meta.Labels ??= new Dictionary<string, string>();
+        meta.Labels.Add("lab.dev/creator", "lab");
+
+        var hasApiVersion = resource.ApiVersion != null;
+        if (!hasApiVersion)
+        {
+            var entityAttrType = typeof(KubernetesEntityAttribute);
+            var entity = typeof(T)
+                .GetCustomAttributes(entityAttrType, false)
+                .Cast<KubernetesEntityAttribute>()
+                .FirstOrDefault();
+            
+            if (entity != null)
+            {
+                resource.ApiVersion = $"{entity.Group}/{entity.ApiVersion}";
+            }
+        }
+        
+        await client.Create(resource);
+        return resource;
     }
     
 }
