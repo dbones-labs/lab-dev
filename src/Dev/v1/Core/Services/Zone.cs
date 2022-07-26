@@ -7,6 +7,9 @@ using KubeOps.Operator.Entities.Annotations;
 [KubernetesEntity(Group = "lab.dev", ApiVersion = "v1")]
 public class Zone : CustomKubernetesEntity<ZoneSpec, ZoneStatus>
 {
+    public static string Environment() => "lab.dev/environment";
+    public static string Region() => "lab.dev/region";
+    public static string Cloud() => "lab.dev/cloud";
 }
 
 public class ZoneSpec

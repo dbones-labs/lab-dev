@@ -4,7 +4,8 @@ using k8s.Models;
 using KubeOps.Operator.Entities;
 using KubeOps.Operator.Entities.Annotations;
 
-[KubernetesEntity(Group = "internal.lab.dev", ApiVersion = "v1")]
+[IgnoreEntity]
+[KubernetesEntity(Group = "management.cattle.io", ApiVersion = "v3")]
 public class Project : CustomKubernetesEntity<ProjectSpec, ProjectSpec>
 {
     

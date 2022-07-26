@@ -1,11 +1,15 @@
 ﻿namespace Dev.Controllers.Rancher;
 
+using System.Text.RegularExpressions;
 using Dev.v1.Core;
 using DotnetKubernetesClient;
+using DotnetKubernetesClient.LabelSelectors;
+using Github.Internal;
 using k8s.Models;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
+using v1.Core.Services;
 
 [EntityRbac(typeof(Tenancy), Verbs = RbacVerb.All)]
 public class TenancyController : IResourceController<Tenancy>
@@ -27,40 +31,78 @@ public class TenancyController : IResourceController<Tenancy>
         if (entity == null) return null;
 
         var contextName = TenancyContext.GetName();
-        var @namespace = entity.Metadata.Name; // //Tenancy.GetNamespaceName(entity.Metadata.Name);
+        var @namespace = entity.Metadata.Name; 
         
-        var ns = await _kubernetesClient.Get<V1Namespace>(@namespace);
-        if (ns == null)
+        //a place to store Tenancy information
+        var ns = await _kubernetesClient.Ensure(() => new V1Namespace(), @namespace);
+        var context = await _kubernetesClient.Ensure(() => new TenancyContext
         {
-            ns = await _kubernetesClient.Create(new V1Namespace()
+            Spec = new()
             {
-                Metadata = new()
-                {
-                    Name = @namespace
-                }
-            });
-            await _kubernetesClient.Create(ns);
-        }
+                OrganizationNamespace = entity.Metadata.NamespaceProperty
+            }
+        }, contextName, @namespace);
+        
+        //figure out which zones this tenancy has access too
+        //note currently storing this in the lab ns
+        var serverQueryList = entity.Spec.ZoneFilter
+            .Where(x => x.Operator != Operator.Pattern)
+            .Where(x => x.Operator != Operator.StartsWith)
+            .Select(x =>
+            {
+                ILabelSelector selector = x.Operator == Operator.Equals
+                    ? new EqualsSelector(x.Key, new[] { x.Value })
+                    : new NotEqualsSelector(x.Key, new[] { x.Value });
+                return selector;
+            })
+            .ToArray();
 
-        var context = await _kubernetesClient.Get<TenancyContext>(contextName, @namespace);
-        if (context == null)
+        var candidateZones = await _kubernetesClient.List<Zone>(entity.Metadata.NamespaceProperty, serverQueryList);
+        
+        var inMemoryQueryList = entity.Spec.ZoneFilter
+            .Where(x => x.Operator == Operator.Pattern)
+            .Where(x => x.Operator == Operator.StartsWith)
+            .Select(x =>
+            {
+                Func<Zone, bool> where = zone =>
+                {
+                    var key = x.Key;
+                    var filterForValue = x.Value;
+                    var hasLabel = zone.Metadata.Labels.TryGetValue(key, out var value);
+                    if (!hasLabel) return false;
+
+                    return (x.Operator == Operator.StartsWith)
+                        ? value.StartsWith(filterForValue)
+                        : Regex.IsMatch(value, filterForValue);
+                };
+
+                return where;
+            } )
+            .ToList();
+
+        candidateZones = candidateZones
+            .Where(x => inMemoryQueryList.All(filter => filter(x)))
+            .ToList();
+
+        foreach (var candidateZone in candidateZones)
         {
-            context = new TenancyContext
+            var zoneName = candidateZone.Metadata.Name;
+            await _kubernetesClient.Ensure(() => new TenancyInZone()
             {
                 Metadata = new()
                 {
-                    Name = contextName,
-                    NamespaceProperty = @namespace
+                    Labels = new Dictionary<string, string>
+                    {
+                        { TenancyInZone.TenancyLabel(), @namespace }
+                    }
                 },
-
                 Spec = new()
                 {
-                    OrganizationNamespace = entity.Metadata.NamespaceProperty
+                    Tenancy = zoneName
                 }
-            };
-            await _kubernetesClient.Create(context);
+            }, $"{zoneName}-{@namespace}", entity.Metadata.NamespaceProperty);
         }
-        
+
         return null;
     }
 
@@ -74,5 +116,12 @@ public class TenancyController : IResourceController<Tenancy>
 
         await _kubernetesClient.Delete<TenancyContext>(contextName, @namespace);
         await _kubernetesClient.Delete<V1Namespace>(@namespace);
+
+        var zones = await _kubernetesClient
+            .List<TenancyInZone>(
+                entity.Metadata.NamespaceProperty, 
+                new EqualsSelector(TenancyInZone.TenancyLabel(), entity.Metadata.Name));
+        
+        await _kubernetesClient.Delete(zones);
     }
 }

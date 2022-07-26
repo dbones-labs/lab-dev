@@ -17,12 +17,6 @@ public class GitRepoSpec
     [Required] public string Repo { get; set; }
 }
 
-
-public class Target
-{
-    
-}
-
 public class ClusterSelector
 {
     
