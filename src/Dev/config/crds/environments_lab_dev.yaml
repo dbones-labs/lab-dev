@@ -1,14 +1,14 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: organizations.lab.dev
+  name: environments.lab.dev
 spec:
   group: lab.dev
   names:
-    kind: Organization
-    listKind: OrganizationList
-    plural: organizations
-    singular: organization
+    kind: Environment
+    listKind: EnvironmentList
+    plural: environments
+    singular: environment
   scope: Namespaced
   versions:
   - name: v1
@@ -22,10 +22,7 @@ spec:
           spec:
             description: Specification of the kubernetes object.
             properties:
-              retainFor:
-                format: int32
-                type: integer
-              productionAccessWorkFlow:
+              isProduction:
                 type: boolean
             type: object
         type: object

@@ -13,4 +13,14 @@ public class KubernetesSpec
     public bool IsPrimary { get; set; } = false;
 }
 
-public class KubernetesStatus { }
+public class KubernetesStatus
+{
+    public string ClusterId { get; set; }
+    public string Environment { get; set; }
+    public string Cloud { get; set; }
+    public string Zone { get; set; }
+    public string Region { get; set; }
+
+    public bool IsProduction { get; set; } = false;
+
+}

@@ -6,7 +6,10 @@ using DotnetKubernetesClient;
 using DotnetKubernetesClient.LabelSelectors;
 using k8s;
 using k8s.Models;
+using KubeOps.Operator.Entities;
+using Marvin.JsonPatch;
 using Octokit;
+using Repository = v1.Platform.Github.Repository;
 using User = v1.Platform.Github.User;
 
 [Obsolete("need to refactor", false)]
@@ -27,7 +30,11 @@ public static class Collab
             Metadata = new()
             {
                 Name = name,
-                NamespaceProperty = organizationNamespace
+                NamespaceProperty = organizationNamespace,
+                Labels = new Dictionary<string, string>()
+                {
+                    { Repository.RepositoryLabel(), repositoryName }
+                }
             },
 
             Spec = new()
@@ -82,6 +89,45 @@ public static class KubernetesClientExtensions
         return value;
     }
 
+    public static async Task UpsertCrdLabel<T>(this IKubernetesClient client, T entity, Dictionary<string, string?> newLables) where T: class, IKubernetesObject<V1ObjectMeta>
+    {
+        //https://github.com/kubernetes-client/csharp/issues/78#issuecomment-372048262
+        //https://github.com/kubernetes-client/csharp/issues/528
+        var patch = new JsonPatchDocument<T>();
+        patch.Replace(e => e.Metadata.Labels, newLables);
+
+        var crdMeta = typeof(T).GetCrdMeta();
+        if (crdMeta == null) throw new Exception($"cannot find CRD info for {typeof(T)}");
+
+            
+        await client.ApiClient.PatchNamespacedCustomObjectAsync(
+            new V1Patch(patch, V1Patch.PatchType.JsonPatch),
+            crdMeta.Group,
+            crdMeta.ApiVersion,
+            entity.Metadata.NamespaceProperty ?? "default",
+            crdMeta.PluralName,
+            entity.Metadata.Name);
+    }
+    
+    public static V1Namespace SetProject(this V1Namespace ns, string project, string? cluster = null)
+    {
+        ns.Metadata ??= new V1ObjectMeta();
+        var metadata = ns.Metadata;
+
+        var key = "field.cattle.io/projectId";
+        cluster ??= "local";
+        var value = $"{cluster}:{project}";
+
+        //set the label
+        metadata.Labels ??= new Dictionary<string, string>();
+        metadata.Labels.Update(key, project);
+
+        //set the annotation
+        metadata.Annotations ??= new Dictionary<string, string>();
+        metadata.Annotations.Update(key, value);
+        return ns;
+    }
+
     public static async Task<T> Ensure<T>(
         this IKubernetesClient client, 
         Func<T> newItem, 
@@ -96,7 +142,12 @@ public static class KubernetesClientExtensions
         return resource;
     }
     
-    public static async Task<T> Create<T>(this IKubernetesClient client, Func<T> newItem, string name, string? @namespace = null) where T : class, IKubernetesObject<V1ObjectMeta>
+    public static async Task<T> Create<T>(
+        this IKubernetesClient client, 
+        Func<T> newItem, 
+        string? name = null, 
+        string? @namespace = null) 
+        where T : class, IKubernetesObject<V1ObjectMeta>
     {
         var resource = newItem();
         resource.Metadata ??= new V1ObjectMeta();
@@ -105,29 +156,46 @@ public static class KubernetesClientExtensions
         meta.Name ??= name;
         meta.NamespaceProperty ??= @namespace;
 
+        if (meta.Name == null && meta.GenerateName == null)
+            throw new Exception("no name passed in, or generatedName");
+        
         meta.Labels ??= new Dictionary<string, string>();
         meta.Labels.Add("lab.dev/creator", "lab");
 
         var hasApiVersion = resource.ApiVersion != null;
         if (!hasApiVersion)
         {
-            var entityAttrType = typeof(KubernetesEntityAttribute);
-            var entity = typeof(T)
-                .GetCustomAttributes(entityAttrType, false)
-                .Cast<KubernetesEntityAttribute>()
-                .FirstOrDefault();
-            
+            var entity = typeof(T).GetCrdMeta();
             if (entity != null)
             {
                 resource.ApiVersion = $"{entity.Group}/{entity.ApiVersion}";
             }
         }
         
-        await client.Create(resource);
+        resource = await client.Create(resource);
         return resource;
     }
     
 }
+
+public static class TypeExtensions
+{
+    public static KubernetesEntityAttribute? GetCrdMeta(this System.Type type)
+    {
+        return type.GetAttr<KubernetesEntityAttribute>();
+    }
+    public static T? GetAttr<T>(this System.Type type) where T : Attribute
+    {
+        var entityAttrType = typeof(T);
+        var attr = type
+            .GetCustomAttributes(entityAttrType, false)
+            .Cast<T>()
+            .FirstOrDefault();
+
+        return attr;
+    }
+}
+
 
 public static class GithubClientExtensions
 {
@@ -152,6 +220,26 @@ public static class HttpAssist
             return null;
         }
         
+    }
+}
+
+public static class DictionaryExtensions
+{
+    public static IDictionary<TKey, TValue> Update<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TValue value)
+    {
+        if (dictionary.TryGetValue(key, out var entry))
+        {
+            if (entry.Equals(value))
+            {
+                dictionary[key] = value;
+            }
+        }
+        else
+        {
+            dictionary.Add(key, value);
+        }
+
+        return dictionary;
     }
 }
 

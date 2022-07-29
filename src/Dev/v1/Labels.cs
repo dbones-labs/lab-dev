@@ -8,3 +8,12 @@ public static class Labels
     public static string Zone = "lab.dev/zone";
     public static string PlatformTeam = "lab.dev/platformTeam";
 }
+
+
+/// <summary>
+/// This entity is only partially mapped, so any updates must be via
+/// patch statements.
+/// </summary>
+public class PartiallyMappedEntityAttribute : Attribute
+{
+}

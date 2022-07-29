@@ -25,13 +25,10 @@ spec:
             description: Specification of the kubernetes object.
             properties:
               environment:
-                nullable: true
                 type: string
               cloud:
-                nullable: true
                 type: string
               region:
-                nullable: true
                 type: string
             required:
             - environment

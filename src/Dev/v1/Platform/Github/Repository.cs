@@ -5,7 +5,10 @@ using KubeOps.Operator.Entities;
 using KubeOps.Operator.Entities.Annotations;
 
 [KubernetesEntity(Group = "github.internal.lab.dev", ApiVersion = "v1")]
-public class Repository : CustomKubernetesEntity<RepositorySpec, RepositoryStatus> { }
+public class Repository : CustomKubernetesEntity<RepositorySpec, RepositoryStatus>
+{
+    public static string RepositoryLabel() => "github.lab.dev/repository";
+}
 
 public class RepositorySpec
 {

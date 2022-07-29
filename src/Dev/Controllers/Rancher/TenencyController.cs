@@ -1,7 +1,7 @@
 ﻿namespace Dev.Controllers.Rancher;
 
 using System.Text.RegularExpressions;
-using Dev.v1.Core;
+using v1.Core;
 using DotnetKubernetesClient;
 using DotnetKubernetesClient.LabelSelectors;
 using Github.Internal;
@@ -11,6 +11,9 @@ using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
 using v1.Core.Services;
 
+/// <summary>
+/// figures up the tenancies across the zones (which zone components will act on)
+/// </summary>
 [EntityRbac(typeof(Tenancy), Verbs = RbacVerb.All)]
 public class TenancyController : IResourceController<Tenancy>
 {
@@ -44,7 +47,18 @@ public class TenancyController : IResourceController<Tenancy>
         }, contextName, @namespace);
         
         //figure out which zones this tenancy has access too
-        //note currently storing this in the lab ns
+        //note currently storing this in the zone ns
+        
+        //see what we have setup
+        var alreadyTenancyInZones = await _kubernetesClient
+            .List<TenancyInZone>(
+                null,
+                new EqualsSelector(Tenancy.TenancyLabel(), @namespace));
+
+        var removalCandidates = alreadyTenancyInZones.ToDictionary(zone => zone.Metadata.Name);
+        
+        //setup the filters
+        //we run as much as we can using K8s Selectors
         var serverQueryList = entity.Spec.ZoneFilter
             .Where(x => x.Operator != Operator.Pattern)
             .Where(x => x.Operator != Operator.StartsWith)
@@ -56,14 +70,14 @@ public class TenancyController : IResourceController<Tenancy>
                 return selector;
             })
             .ToArray();
-
-        var candidateZones = await _kubernetesClient.List<Zone>(entity.Metadata.NamespaceProperty, serverQueryList);
         
+        //anything we cannot do as a selector, we do in mem :(
         var inMemoryQueryList = entity.Spec.ZoneFilter
             .Where(x => x.Operator == Operator.Pattern)
             .Where(x => x.Operator == Operator.StartsWith)
             .Select(x =>
             {
+                //TODO REFACTOR
                 Func<Zone, bool> where = zone =>
                 {
                     var key = x.Key;
@@ -80,12 +94,27 @@ public class TenancyController : IResourceController<Tenancy>
             } )
             .ToList();
 
+        var candidateZones = await _kubernetesClient.List<Zone>(entity.Metadata.NamespaceProperty, serverQueryList);
+        
         candidateZones = candidateZones
             .Where(x => inMemoryQueryList.All(filter => filter(x)))
             .ToList();
-
+        
+        //we need to figure out
+        //create
+        //skip (exists)
+        //delete
+        
         foreach (var candidateZone in candidateZones)
         {
+            if (removalCandidates.ContainsKey(candidateZone.Metadata.Name))
+            {
+                //already have, skip
+                removalCandidates.Remove(candidateZone.Metadata.Name);
+                continue;
+            }
+            
+            //easy we create
             var zoneName = candidateZone.Metadata.Name;
             await _kubernetesClient.Ensure(() => new TenancyInZone()
             {
@@ -93,15 +122,25 @@ public class TenancyController : IResourceController<Tenancy>
                 {
                     Labels = new Dictionary<string, string>
                     {
-                        { TenancyInZone.TenancyLabel(), @namespace }
+                        { Tenancy.TenancyLabel(), @namespace }
                     }
                 },
                 Spec = new()
                 {
-                    Tenancy = zoneName
+                    Tenancy = @namespace
                 }
-            }, $"{zoneName}-{@namespace}", entity.Metadata.NamespaceProperty);
+            }, $"{zoneName}-{@namespace}", zoneName);
         }
+
+        //anything we have left is now considered obsolete
+        foreach (var removalCandidate in removalCandidates.Values)
+        {
+            await _kubernetesClient.Delete(removalCandidate);
+        }
+
+        //setup create the service role for the tenancies fleet
+        
+        //setup the fleet for the one tenancy.
 
         return null;
     }
@@ -119,8 +158,8 @@ public class TenancyController : IResourceController<Tenancy>
 
         var zones = await _kubernetesClient
             .List<TenancyInZone>(
-                entity.Metadata.NamespaceProperty, 
-                new EqualsSelector(TenancyInZone.TenancyLabel(), entity.Metadata.Name));
+                null, 
+                new EqualsSelector(Tenancy.TenancyLabel(), @namespace));
         
         await _kubernetesClient.Delete(zones);
     }

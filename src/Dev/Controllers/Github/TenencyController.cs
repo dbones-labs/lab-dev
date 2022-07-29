@@ -28,125 +28,91 @@ public class TenancyController : IResourceController<Tenancy>
     {
         if (entity == null) return null;
 
-        var @namespace = entity.Metadata.Name; //Tenancy.GetNamespaceName(entity.Metadata.Name);
+        var tenancyName = entity.Metadata.Name; //Tenancy.GetNamespaceName(entity.Metadata.Name);
         var organisation = entity.Metadata.NamespaceProperty;
         var teamName = Team.GetTeamName(entity.Metadata.Name);
         var guestTeamName = Team.GetGuestTeamName(entity.Metadata.Name);
         
-        var team = await _kubernetesClient.Get<Team>(teamName, organisation);
-        if (team == null)
-        {
-            team = new()
-            {
-                Metadata = new()
-                {
-                    Name = teamName,
-                    NamespaceProperty = organisation,
-                    Labels = new Dictionary<string, string>()
-                    {
-                        { Team.PlatformLabel(), entity.Spec.IsPlatform ? "True" : "False" }
-                    }
-                },
-                
-                Spec = new()
-                {
-                    Type = Type.Normal,
-                    Visibility = Visibility.Internal
-                }
-            };
-
-            await _kubernetesClient.Create(team);
-        }
+        var ns = await _kubernetesClient.Get<V1Namespace>(tenancyName);
+        if (ns == null) throw new Exception($"requires tenancy namespace {tenancyName}");
         
-        var guestTeam = await _kubernetesClient.Get<Team>(guestTeamName, organisation);
-        if (guestTeam == null)
-        {
-            guestTeam = new()
-            {
-                Metadata = new()
-                {
-                    Name = guestTeamName,
-                    NamespaceProperty = organisation
-                },
-                
-                Spec = new()
-                {
-                    Type = Type.System,
-                    Visibility = Visibility.Internal
-                }
-            };
-
-            await _kubernetesClient.Create(guestTeam);
-        }
+        /*
+         * need to confirm the best place to put these, as this is the control mechanism for a tenancy.
+         * need to confirm if the tenancy users will have what level of access to these resouces in this ns
+         * 
+         * 2 teams
+         * 1 repo
+         * make the 2 teams as contrib
+         *
+         * if they are a platform  tenancy, then they git access as write to the org repo.
+         */
         
-        var ns = await _kubernetesClient.Get<V1Namespace>(@namespace);
-        if (ns == null) throw new Exception($"requires tenancy namespace {@namespace}");
-
-        var tenancyRepo = await _kubernetesClient.Get<Repository>(@namespace, @namespace);
-        if (tenancyRepo == null)
+        //TEAMS
+        var team = _kubernetesClient.Ensure(() =>new Team
         {
-            tenancyRepo = new()
+            Metadata = new V1ObjectMeta
             {
-                Metadata = new()
+                Labels = new Dictionary<string, string>()
                 {
-                    Name = @namespace,
-                    NamespaceProperty = @namespace
-                },
-                Spec = new()
-                {
-                    EnforceCollaborators = false,
-                    State = State.Active,
-                    Type = Type.System,
-                    Visibility = Visibility.Internal,
-                    OrganizationNamespace = organisation
+                    { Team.PlatformLabel(), entity.Spec.IsPlatform ? "True" : "False" }
                 }
-            };
-
-            await _kubernetesClient.Create(tenancyRepo);
-        }
-
-        var collabName = Collab.GetCollabName(tenancyRepo.Metadata.Name, teamName);
-        var collab = await _kubernetesClient.Get<Collaborator>(collabName, organisation);
-        if (collab == null)
-        {
-            collab = Collab.Create(
-                tenancyRepo.Metadata.Name,
-                teamName,
-                organisation,
-                Membership.Push);
-            
-            await _kubernetesClient.Create(collab);
-        }
+            },
+            Spec = new()
+            {
+                Type = Type.Normal,
+                Visibility = Visibility.Internal
+            }
+        }, tenancyName, tenancyName);
         
-        var guestCollabName = Collab.GetCollabName(tenancyRepo.Metadata.Name, guestTeamName);
-        var guestCollab = await _kubernetesClient.Get<Collaborator>(guestCollabName, organisation);
-        if (guestCollab == null)
+        var guestTeam = _kubernetesClient.Ensure(() =>new Team
         {
-            guestCollab = Collab.Create(
-                tenancyRepo.Metadata.Name,
-                guestTeamName,
-                organisation,
-                Membership.Pull);
-            
-            await _kubernetesClient.Create(guestCollab);
-        }
+            Spec = new()
+            {
+                Type = Type.System,
+                Visibility = Visibility.Internal
+            }
+        }, guestTeamName, tenancyName);
+        
+        //REPO
+        var tenancyRepo = await _kubernetesClient.Ensure(() =>new Repository
+        {
+            Spec = new()
+            {
+                EnforceCollaborators = false,
+                State = State.Active,
+                Type = Type.System,
+                Visibility = Visibility.Internal,
+                OrganizationNamespace = organisation
+            }
+        }, tenancyName, tenancyName);
+        
+        
+        //COLLB
+        var collabName = Collab.GetCollabName(tenancyName, teamName);
+        await _kubernetesClient.Ensure(() => Collab.Create(
+            tenancyName,
+            teamName,
+            organisation,
+            Membership.Push), collabName, tenancyName);
+        
+        
+        var guestCollabName = Collab.GetCollabName(tenancyName, guestTeamName);
+        await _kubernetesClient.Ensure(() => Collab.Create(
+            tenancyName,
+            guestTeamName,
+            organisation,
+            Membership.Pull), guestCollabName, tenancyName);
 
+        
+        //PLATORM team access to ORG repo
         if (entity.Spec.IsPlatform)
         {
             var platformOrgCollabName = Collab.GetCollabName(organisation, teamName);
-            var platformOrgCollab = await _kubernetesClient.Get<Collaborator>(platformOrgCollabName, organisation);
-            if (platformOrgCollab == null)
-            {
-                platformOrgCollab = Collab.Create(
-                    organisation,
-                    teamName,
-                    organisation,
-                    Membership.Push);
-            
-                await _kubernetesClient.Create(platformOrgCollab);
-            }
-            
-            //todo add the Zones
+            await _kubernetesClient.Ensure(() => Collab.Create(
+                organisation,
+                teamName,
+                organisation,
+                Membership.Push), platformOrgCollabName, organisation);
         }
         
         return null;
@@ -157,20 +123,20 @@ public class TenancyController : IResourceController<Tenancy>
     {
         if (entity == null) return;
 
-        var @namespace = entity.Metadata.Name;   //Tenancy.GetNamespaceName(entity.Metadata.Name);
+        var tenancyName = entity.Metadata.Name;   //Tenancy.GetNamespaceName(entity.Metadata.Name);
         var organisation = entity.Metadata.NamespaceProperty;
         var teamName = Team.GetTeamName(entity.Metadata.Name);
         var guestTeamName = Team.GetGuestTeamName(entity.Metadata.Name);
         
-        var collabName = Collab.GetCollabName(@namespace, teamName);
-        var guestCollabName = Collab.GetCollabName(@namespace, guestTeamName);
+        var collabName = Collab.GetCollabName(tenancyName, teamName);
+        var guestCollabName = Collab.GetCollabName(tenancyName, guestTeamName);
         var platformOrgCollabName = Collab.GetCollabName(organisation, teamName);
         
-        await _kubernetesClient.Delete<Collaborator>(collabName, organisation);
-        await _kubernetesClient.Delete<Collaborator>(guestCollabName, organisation);
         await _kubernetesClient.Delete<Collaborator>(platformOrgCollabName, organisation);
+        await _kubernetesClient.Delete<Collaborator>(collabName, tenancyName);
+        await _kubernetesClient.Delete<Collaborator>(guestCollabName, tenancyName);
         
-        await _kubernetesClient.Delete<Repository>(@namespace, @namespace);
+        await _kubernetesClient.Delete<Repository>(tenancyName, tenancyName);
     }
 }
 
