@@ -24,8 +24,26 @@ spec:
             properties:
               isPlatform:
                 type: boolean
-              clusterFilter:
-                type: string
+              zoneFilter:
+                items:
+                  properties:
+                    key:
+                      type: string
+                    operator:
+                      enum:
+                      - Pattern
+                      - StartsWith
+                      - Equals
+                      - NotEquals
+                      type: string
+                    value:
+                      type: string
+                  required:
+                  - key
+                  - operator
+                  - value
+                  type: object
+                type: array
             type: object
         type: object
     served: true

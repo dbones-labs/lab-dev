@@ -20,8 +20,12 @@ public class RancherController : IResourceController<Rancher>
         _logger = logger;
     }
 
-    // public async Task<ResourceControllerResult?> ReconcileAsync(Rancher? entity)
-    // {
-    //     
-    // }
+    public async Task<ResourceControllerResult?> ReconcileAsync(Rancher? entity)
+    {
+        //fleet
+        //setup for the ORG
+        //setup for the repo which we will setup each tenancy later.
+        
+        return null;
+    }
 }

@@ -1,4 +1,4 @@
-﻿namespace Dev.v1.Platform.Rancher.Fleet;
+﻿namespace Dev.v1.Platform.Rancher.External.Fleet;
 
 using k8s.Models;
 using KubeOps.Operator.Entities;
