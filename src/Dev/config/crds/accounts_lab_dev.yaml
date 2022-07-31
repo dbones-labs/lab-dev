@@ -29,8 +29,13 @@ spec:
                 items:
                   properties:
                     provider:
+                      description: >-
+                        the provider which the account is to be associated with
+
+                        github, discord, rancher etc
                       type: string
                     id:
+                      description: the account id of the external system
                       type: string
                   required:
                   - provider

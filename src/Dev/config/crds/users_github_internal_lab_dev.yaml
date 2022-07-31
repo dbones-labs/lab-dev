@@ -32,6 +32,7 @@ spec:
             description: Specification of the kubernetes object.
             properties:
               login:
+                description: the github username
                 type: string
             required:
             - login

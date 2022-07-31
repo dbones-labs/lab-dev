@@ -23,6 +23,10 @@ spec:
             description: Specification of the kubernetes object.
             properties:
               retainFor:
+                description: >-
+                  how long to retain the service, when it have been deleted
+
+                  this allows for a service to be transferred between tenancies (default 1 week)
                 format: int32
                 type: integer
               productionAccessWorkFlow:

@@ -19,6 +19,7 @@ spec:
             description: Status object for the entity.
             properties:
               id:
+                description: the rancher project id (as it get generated, and placed into another namespace)
                 nullable: true
                 type: string
             type: object
@@ -26,8 +27,10 @@ spec:
             description: Specification of the kubernetes object.
             properties:
               tenancy:
+                description: the name of the tenancy (not the name of this resource)
                 type: string
               kubernetes:
+                description: the cluster this belongs too
                 type: string
             required:
             - tenancy

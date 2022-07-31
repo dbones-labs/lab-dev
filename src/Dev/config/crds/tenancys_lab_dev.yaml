@@ -23,8 +23,10 @@ spec:
             description: Specification of the kubernetes object.
             properties:
               isPlatform:
+                description: this indicates that the team is a platform team
                 type: boolean
               zoneFilter:
+                description: this will be used to select which zones a tenancy has access to
                 items:
                   properties:
                     key:

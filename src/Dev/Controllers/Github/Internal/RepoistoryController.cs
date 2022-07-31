@@ -106,9 +106,10 @@ public class RepositoryController : IResourceController<Repository>
                     Private = isPrivate,
                     Archived = isArchived,
                     Visibility = setVisibility
-                    
+
                 };
                 repository = await _gitHubClient.Repository.Edit(repository.Id, repoUpdate);
+                
             }
         }
 

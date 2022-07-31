@@ -25,10 +25,13 @@ spec:
             description: Specification of the kubernetes object.
             properties:
               environment:
+                description: the name of the environment this belongs to
                 type: string
               cloud:
+                description: aws, azure, on-prem, scaleway, etc
                 type: string
               region:
+                description: where this zone is located
                 type: string
             required:
             - environment

@@ -27,22 +27,32 @@ spec:
             description: Specification of the kubernetes object.
             properties:
               visibility:
+                description: control who can see the repository
                 enum:
                 - Public
                 - Internal
                 - Private
                 type: string
               state:
+                description: is the repository is active or archived
                 enum:
                 - Archived
                 - Active
                 type: string
               type:
+                description: >-
+                  the repo can be for projects/service (normal) or to adminsitrate/control (system)
+
+                  [default: Normal]
                 enum:
                 - System
                 - Normal
                 type: string
               enforceCollaborators:
+                description: >-
+                  ensure only the managed collaborators are provided access.
+
+                  [default: false]
                 type: boolean
               organizationNamespace:
                 type: string

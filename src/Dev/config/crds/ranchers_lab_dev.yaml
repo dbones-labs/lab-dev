@@ -23,6 +23,10 @@ spec:
             description: Specification of the kubernetes object.
             properties:
               technicalUser:
+                description: >-
+                  this user will be assigned as the owner in a number of cases.
+
+                  should be a GOD user.
                 type: string
               platformMemberRole:
                 type: string

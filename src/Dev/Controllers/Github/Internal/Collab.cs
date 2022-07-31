@@ -172,6 +172,16 @@ public static class KubernetesClientExtensions
             }
         }
         
+        var hasKindVersion = resource.Kind != null;
+        if (!hasKindVersion)
+        {
+            var entity = typeof(T).GetCrdMeta();
+            if (entity != null)
+            {
+                resource.Kind = entity.Kind;
+            }
+        }
+        
         resource = await client.Create(resource);
         return resource;
     }
