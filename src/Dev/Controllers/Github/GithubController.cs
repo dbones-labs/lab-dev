@@ -1,6 +1,7 @@
 ﻿namespace Dev.Controllers.Github;
 
 using DotnetKubernetesClient;
+using Internal;
 using k8s.Models;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
@@ -39,85 +40,39 @@ public class GithubController : IResourceController<Github>
         {
             _logger.LogWarning("ensure that you add a github secret");
         }
-
-        string @namespace = org.Metadata.NamespaceProperty;
-        var orgRepo = await _kubernetesClient.Get<Repository>(@namespace, @namespace);
-        if (orgRepo == null)
-        {
-            orgRepo = new()
-            {
-                ApiVersion = "github.internal.lab.dev/v1",
-                Kind = "Repository",
-                Metadata = new()
-                {
-                    Name = @namespace,
-                    NamespaceProperty = @namespace
-                },
-                Spec = new()
-                {
-                    EnforceCollaborators = false,
-                    State = State.Active,
-                    Type = Type.System,
-                    Visibility = Visibility.Internal,
-                    OrganizationNamespace = @namespace
-                }
-            };
-
-            try
-            {
-                await _kubernetesClient.Create(orgRepo);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                throw;
-            }
-            
-        }
         
-        var globalTeamName = entity.Spec.GlobalTeam;
-        var globalTeam = await _kubernetesClient.Get<Team>(globalTeamName, orgNs);
-        if (globalTeam == null)
+        await _kubernetesClient.Ensure(() => new Repository()
         {
-            await _kubernetesClient.Create(new Team
+            Spec = new()
             {
-                ApiVersion = "github.internal.lab.dev/v1",
-                Kind = "Team",
-                Metadata = new()
-                {
-                    Name = globalTeamName,
-                    NamespaceProperty = orgNs
-                }, 
-                
-                Spec = new()
-                {
-                    Type = Type.System,
-                    Visibility = Visibility.Private
-                }
-            });
-        }
+                EnforceCollaborators = false,
+                State = State.Active,
+                Type = Type.System,
+                Visibility = Visibility.Internal,
+                OrganizationNamespace = orgNs
+            }
+        }, orgNs, orgNs);
+
+        var globalTeamName = entity.Spec.GlobalTeam;
+        await _kubernetesClient.Ensure(() => new Team
+        {
+            Spec = new()
+            {
+                Type = Type.System,
+                Visibility = Visibility.Private
+            }
+        }, globalTeamName, orgNs);
         
         var archivedTeamName = entity.Spec.ArchiveTeam;
-        var archivedTeam = await _kubernetesClient.Get<Team>(archivedTeamName, orgNs);
-        if (archivedTeam == null)
+        await _kubernetesClient.Ensure(() => new Team
         {
-            await _kubernetesClient.Create(new Team
+            Spec = new()
             {
-                ApiVersion = "github.internal.lab.dev/v1",
-                Kind = "Team",
-                Metadata = new()
-                {
-                    Name = archivedTeamName,
-                    NamespaceProperty = orgNs
-                },
-
-                Spec = new()
-                {
-                    Type = Type.System,
-                    Visibility = Visibility.Private
-                }
-            });
-        }
+                Type = Type.System,
+                Visibility = Visibility.Private
+            }
+        }, archivedTeamName, orgNs);
+        
 
         return null;
     }

@@ -35,19 +35,13 @@ public class AccountController : IResourceController<Account>
         var @namespace = entity.Metadata.NamespaceProperty;
         
         var user = await _kubernetesClient.Get<User>(name, @namespace);
-        
-  
         if (user == null)
         {
             //create user
-            user = new User
+            await _kubernetesClient.Create(() => new User
             {
-                ApiVersion = "github.internal.lab.dev/v1", 
-                Kind = "User",
                 Metadata = new()
                 {
-                    Name = name,
-                    NamespaceProperty = @namespace,
                     Labels = new Dictionary<string, string>()
                     {
                         { User.AccountLabel(), name },
@@ -59,9 +53,7 @@ public class AccountController : IResourceController<Account>
                 {
                     Login = login
                 }
-            };
-
-            await _kubernetesClient.Create(user);
+            }, name, @namespace);
         }
         else
         {
@@ -77,26 +69,21 @@ public class AccountController : IResourceController<Account>
         //add membership to default team.
         var github = await _kubernetesClient.GetGithub(entity.Metadata.NamespaceProperty);
         
+        
+        
+        
         var member = await _kubernetesClient.Get<TeamMember>(name, @namespace);
         if (member == null)
         {
-            member = new TeamMember()
+            await _kubernetesClient.Create(() => new TeamMember
             {
-                ApiVersion = "github.internal.lab.dev/v1",
-                Kind = "TeamMember",
-                Metadata = new()
-                {
-                    Name = name,
-                    NamespaceProperty = entity.Metadata.NamespaceProperty
-                },
                 Spec = new()
                 {
                     Login = login,
                     Team = github.Spec.GlobalTeam
                 }
-            };
+            }, name, @namespace);
             
-            await _kubernetesClient.Create(member);
         }
         else
         {
@@ -106,8 +93,7 @@ public class AccountController : IResourceController<Account>
                 await _kubernetesClient.Update(member);
             }
         }
-        
-        
+
         return null;
     }
     

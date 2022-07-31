@@ -27,12 +27,14 @@ spec:
             description: Specification of the kubernetes object.
             properties:
               visibility:
+                description: who should be able to see the team (some teams you may not want to be viewable)
                 enum:
                 - Public
                 - Internal
                 - Private
                 type: string
               type:
+                description: what is the context of the team, system teams are around automations and control
                 enum:
                 - System
                 - Normal

@@ -1,6 +1,7 @@
 ﻿namespace Dev.Controllers.Github;
 
 using DotnetKubernetesClient;
+using Internal;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
@@ -41,26 +42,15 @@ public class MemberController : IResourceController<Member>
         var login = await _kubernetesClient.Get<User>(entity.Spec.Account, context.Spec.OrganizationNamespace);
         if (login == null) throw new Exception($"missing login for account: {entity.Spec.Account}");
 
-        var member = await _kubernetesClient.Get<TeamMember>(entryName, entity.Metadata.NamespaceProperty);
-        if (member == null)
+        await _kubernetesClient.Ensure(() => new TeamMember
         {
-            member = new TeamMember()
+            Spec = new()
             {
-                Metadata = new()
-                {
-                    Name = entryName,
-                    NamespaceProperty = entity.Metadata.NamespaceProperty
-                },
-                Spec = new()
-                {
-                    Login = login.Spec.Login,
-                    Team = teamName
-                }
-            };
-            
-            await _kubernetesClient.Create(member);
-        }
-        
+                Login = login.Spec.Login,
+                Team = teamName
+            }
+        }, entryName, entity.Metadata.NamespaceProperty);
+
         return null;
     }
 

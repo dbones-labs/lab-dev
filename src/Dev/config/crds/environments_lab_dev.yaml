@@ -23,6 +23,7 @@ spec:
             description: Specification of the kubernetes object.
             properties:
               isProduction:
+                description: "          is this environment a production one\n          "
                 type: boolean
             type: object
         type: object
