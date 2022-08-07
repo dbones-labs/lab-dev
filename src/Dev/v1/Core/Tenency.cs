@@ -28,7 +28,7 @@ public class TenancySpec
     /// <summary>
     /// this indicates that the team is a platform team
     /// </summary>
-    public bool IsPlatform { get; set; } = false;
+    [AdditionalPrinterColumn] public bool IsPlatform { get; set; } = false;
     
     /// <summary>
     /// this will be used to select which zones a tenancy has access to
@@ -37,7 +37,7 @@ public class TenancySpec
 
     public bool Where(Zone zone)
     {
-        return ZoneFilter.All(x => x.Where(zone));
+        return !ZoneFilter.Any() || ZoneFilter.All(x => x.Where(zone));
     }
 }
 

@@ -9,6 +9,8 @@ using k8s.Models;
 using KubeOps.Operator.Entities;
 using Marvin.JsonPatch;
 using Octokit;
+using v1.Core;
+using Organization = Octokit.Organization;
 using Repository = v1.Platform.Github.Repository;
 using User = v1.Platform.Github.User;
 
@@ -20,41 +22,30 @@ public static class Collab
         return $"{repositoryName}-{teamName}";
     }
 
-    public static Collaborator Create(string repositoryName, string teamName, string organizationNamespace, Membership membership)
-    {
-        var name = GetCollabName(repositoryName, teamName);
-        return new Collaborator()
-        {
-            ApiVersion = "github.internal.lab.dev/v1",
-            Kind = "Collaborator",
-            Metadata = new()
-            {
-                Name = name,
-                NamespaceProperty = organizationNamespace,
-                Labels = new Dictionary<string, string>()
-                {
-                    { Repository.RepositoryLabel(), repositoryName }
-                }
-            },
-
-            Spec = new()
-            {
-                Repository = repositoryName,
-                Team = teamName,
-                OrganizationNamespace = organizationNamespace,
-                Membership = membership
-            }
-        };
-    }
 }
 
 public static class KubernetesClientExtensions
 {
     public static async Task<Github> GetGithub(this IKubernetesClient kubernetesClient, string organisationNamespace)
     {
-        var github = await kubernetesClient.Get<Github>("github", organisationNamespace);
+        var targetNamespace = organisationNamespace;
+        var context = await kubernetesClient.Get<TenancyContext>(TenancyContext.GetName(), organisationNamespace);
+        if (context != null)
+        {
+            targetNamespace = context.Spec.OrganizationNamespace;
+        }
+        
+        var github = await kubernetesClient.Get<Github>("github", targetNamespace);
         if (github == null) throw new Exception("cannot find 'github' resource");
         return github;
+    }
+
+    public static async Task<v1.Core.Organization> GetOrganization(this IKubernetesClient kubernetesClient, string @namespace)
+    {
+        var orgs = await kubernetesClient.List<v1.Core.Organization>(@namespace);
+        var org = orgs.FirstOrDefault();
+        if (org == null) throw new Exception("please ensure you add an Organisation");
+        return org;
     }
 
     public static async Task<Dev.v1.Core.Account?> GetAccountByGithubUser(this IKubernetesClient kubernetesClient, string @namespace, string login)
@@ -178,7 +169,7 @@ public static class KubernetesClientExtensions
             var entity = typeof(T).GetCrdMeta();
             if (entity != null)
             {
-                resource.Kind = entity.Kind;
+                resource.Kind = entity.Kind ?? typeof(T).Name;
             }
         }
         

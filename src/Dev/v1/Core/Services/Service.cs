@@ -11,7 +11,7 @@ public class Service : CustomKubernetesEntity<ServiceSpec, ServiceStatus>
 
 public class ServiceSpec
 {
-    public Visibility Visibility { get; set; } = Visibility.Internal;
+    [AdditionalPrinterColumn] public Visibility Visibility { get; set; } = Visibility.Internal;
     public List<Zone> Zones { get; set; } = new();
 }
 

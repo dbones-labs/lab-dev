@@ -8,7 +8,37 @@ using KubeOps.Operator.Entities.Annotations;
 /// teams which collab on a repo (in our case its a TEAM having access)
 /// </summary>
 [KubernetesEntity(Group = "github.internal.lab.dev", ApiVersion = "v1")]
-public class Collaborator : CustomKubernetesEntity<CollaboratorSpec, CollaboratorStatus> { }
+public class Collaborator : CustomKubernetesEntity<CollaboratorSpec, CollaboratorStatus>
+{
+    public static string GetCollabName(string repositoryName, string teamName)
+    {
+        return $"{repositoryName}-{teamName}";
+    }
+    
+    public static Collaborator Init(string repositoryName, string teamName, string organizationNamespace, Membership membership)
+    {
+        var name = GetCollabName(repositoryName, teamName);
+        return new Collaborator()
+        {
+            Metadata = new()
+            {
+                Name = name,
+                Labels = new Dictionary<string, string>()
+                {
+                    { Repository.RepositoryLabel(), repositoryName }
+                }
+            },
+
+            Spec = new()
+            {
+                Repository = repositoryName,
+                Team = teamName,
+                OrganizationNamespace = organizationNamespace,
+                Membership = membership
+            }
+        };
+    }
+}
 
 public class CollaboratorSpec
 {

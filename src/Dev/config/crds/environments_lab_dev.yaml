@@ -11,7 +11,13 @@ spec:
     singular: environment
   scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - description: "          is this environment a production one\n          "
+      jsonPath: .spec.isProduction
+      name: IsProduction
+      priority: 0
+      type: boolean
+    name: v1
     schema:
       openAPIV3Schema:
         properties:
@@ -25,6 +31,8 @@ spec:
               isProduction:
                 description: "          is this environment a production one\n          "
                 type: boolean
+            required:
+            - isProduction
             type: object
         type: object
     served: true

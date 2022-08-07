@@ -11,7 +11,17 @@ spec:
     singular: firefighter
   scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .spec.tenancy
+      name: Tenancy
+      priority: 0
+      type: string
+    - format: date-time
+      jsonPath: .spec.finish
+      name: Finish
+      priority: 0
+      type: string
+    name: v1
     schema:
       openAPIV3Schema:
         properties:

@@ -8,12 +8,22 @@ public class Team : CustomKubernetesEntity<TeamSpec, TeamStatus>
 {
     public static string GetTeamName(string teamName)
     {
-        return teamName;
+        if (string.IsNullOrWhiteSpace(teamName)) throw new Exception(nameof(teamName));
+        return IsGuestTeamName(teamName)
+            ? teamName.Replace("-guest", "")
+            : teamName;
     }
     
     public static string GetGuestTeamName(string teamName)
     {
+        if (string.IsNullOrWhiteSpace(teamName)) throw new Exception(nameof(teamName));
         return $"{GetTeamName(teamName)}-guest";
+    }
+
+    public static bool IsGuestTeamName(string teamName)
+    {
+        if (string.IsNullOrWhiteSpace(teamName)) throw new Exception(nameof(teamName));
+        return teamName.EndsWith("-guest");
     }
 
     public static string PlatformLabel() => "github.lab.dev/platformTeam";

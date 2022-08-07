@@ -88,31 +88,19 @@ public class TenancyController : IResourceController<Tenancy>
         
         
         //COLLB
-        var collabName = Collab.GetCollabName(tenancyName, teamName);
-        await _kubernetesClient.Ensure(() => Collab.Create(
-            tenancyName,
-            teamName,
-            organisation,
-            Membership.Push), collabName, tenancyName);
+        var collab = Collaborator.Init(tenancyName, teamName, organisation, Membership.Push);
+        await _kubernetesClient.Ensure(() => collab, collab.Metadata.Name, tenancyName);
         
-        
-        var guestCollabName = Collab.GetCollabName(tenancyName, guestTeamName);
-        await _kubernetesClient.Ensure(() => Collab.Create(
-            tenancyName,
-            guestTeamName,
-            organisation,
-            Membership.Pull), guestCollabName, tenancyName);
+        var guestCollab = Collaborator.Init(tenancyName, guestTeamName, organisation, Membership.Pull);
+        await _kubernetesClient.Ensure(() => guestCollab, guestCollab.Metadata.Name, tenancyName);
 
         
         //PLATORM team access to ORG repo
         if (entity.Spec.IsPlatform)
         {
-            var platformOrgCollabName = Collab.GetCollabName(organisation, teamName);
-            await _kubernetesClient.Ensure(() => Collab.Create(
-                organisation,
-                teamName,
-                organisation,
-                Membership.Push), platformOrgCollabName, organisation);
+            var github = await _kubernetesClient.GetGithub(organisation);
+            var platformOrgCollab = Collaborator.Init(github.Spec.GlobalTeam, teamName, organisation, Membership.Push);
+            await _kubernetesClient.Ensure(() => platformOrgCollab, platformOrgCollab.Metadata.Name, organisation);
         }
         
         return null;

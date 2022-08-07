@@ -38,7 +38,24 @@ public class CollaboratorController  : IResourceController<Collaborator>
         var spec = entity.Spec;
         var org = github.Spec.Organisation;
 
-        var team = await _kubernetesClient.Get<Team>(spec.Team, github.Metadata.NamespaceProperty);
+        Team? team = null;
+        if (spec.OrganizationNamespace == entity.Metadata.NamespaceProperty)
+        {
+            var name = spec.Team == github.Spec.GlobalTeam || spec.Team == github.Spec.ArchiveTeam
+                ? spec.OrganizationNamespace // global repo <- global team
+                : spec.Team; // global repo <- tenancy Team
+            
+            //we are connecting a global team
+            team =  await _kubernetesClient.Get<Team>(spec.Team, name);
+        }
+        else
+        {
+            var name = entity.Metadata.NamespaceProperty != spec.Team && !Team.IsGuestTeamName(spec.Team)
+                ? spec.OrganizationNamespace // tenancy repo <- global team
+                : Team.GetTeamName(spec.Team); // tenancy repo <- tenancy team
+            
+            team = await _kubernetesClient.Get<Team>(spec.Team, name);
+        }
         if (team == null) throw new Exception($"cannot find team {spec.Team}");
         if (!team.Status.Id.HasValue) throw new Exception($"missing id for team {spec.Team}");
 

@@ -17,9 +17,16 @@ public class FireFighter : CustomKubernetesEntity<FireFighterSpec, FireFighterSt
 public class FireFighterSpec
 {
     [Required] public string Account { get; set; } = String.Empty;
-    [Required] public string Tenancy { get; set; } = String.Empty;
+    
+    [Required]
+    [AdditionalPrinterColumn] 
+    public string Tenancy { get; set; } = String.Empty;
+    
     [Required] public DateTime Start { get; set; }
-    [Required] public DateTime Finish { get; set; }
+    
+    [Required]
+    [AdditionalPrinterColumn] 
+    public DateTime Finish { get; set; }
     public int Number { get; set; }
     public long RepositoryId { get; set; }
 }

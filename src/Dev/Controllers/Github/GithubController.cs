@@ -23,24 +23,25 @@ public class GithubController : IResourceController<Github>
         _kubernetesClient = kubernetesClient;
         _logger = logger;
     }
-    
+
     public async Task<ResourceControllerResult?> ReconcileAsync(Github? entity)
     {
         if (entity == null) return null;
         if (entity.Status.CredentialsReference != null) return null;
         if (entity.Metadata.Name != "github") throw new Exception("please call the Github Resource - 'github'");
-        
+
         var orgs = await _kubernetesClient.List<Organization>(entity.Metadata.NamespaceProperty);
         var org = orgs.FirstOrDefault();
         if (org == null) throw new Exception("please ensure you add an Organisation");
-            
+
         var orgNs = org.Metadata.NamespaceProperty;
         var secret = await _kubernetesClient.Get<V1Secret>(entity.Spec.Credentials, orgNs);
         if (secret == null)
         {
             _logger.LogWarning("ensure that you add a github secret");
         }
-        
+
+
         await _kubernetesClient.Ensure(() => new Repository()
         {
             Spec = new()
@@ -53,6 +54,7 @@ public class GithubController : IResourceController<Github>
             }
         }, orgNs, orgNs);
 
+
         var globalTeamName = entity.Spec.GlobalTeam;
         await _kubernetesClient.Ensure(() => new Team
         {
@@ -62,7 +64,7 @@ public class GithubController : IResourceController<Github>
                 Visibility = Visibility.Private
             }
         }, globalTeamName, orgNs);
-        
+
         var archivedTeamName = entity.Spec.ArchiveTeam;
         await _kubernetesClient.Ensure(() => new Team
         {
@@ -72,11 +74,11 @@ public class GithubController : IResourceController<Github>
                 Visibility = Visibility.Private
             }
         }, archivedTeamName, orgNs);
-        
+
 
         return null;
     }
-    
+
     public async Task DeletedAsync(Github? entity)
     {
         if (entity == null)

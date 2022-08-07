@@ -2,6 +2,7 @@
 
 using Dev.v1.Platform.Github;
 using DotnetKubernetesClient;
+using k8s.Models;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
@@ -118,6 +119,7 @@ public class RepositoryController : IResourceController<Repository>
             entity.Status.Id = repository.Id;
         }
 
+        //this is a tenancy which we can raise FF access to
         if (entity.Spec.Type == Type.System)
         {
             await EnsureLabel(repository, FireFighter.Activated());
@@ -125,24 +127,26 @@ public class RepositoryController : IResourceController<Repository>
             await EnsureLabel(repository, FireFighter.Requested());
         }
         
-        var globalCollabName = Collab.GetCollabName(meta.Name, github.Spec.GlobalTeam);
+        var globalCollabName = Collaborator.GetCollabName(meta.Name, github.Spec.GlobalTeam);
         if (spec.Visibility == Visibility.Private)
         {
-            await _kubernetesClient.Delete<Collaborator>(globalCollabName, org);
+            //ensure that only the repo teams can access, not the org team
+            await _kubernetesClient.Delete<Collaborator>(globalCollabName, meta.NamespaceProperty);
         }
         else
         {
+            //allow the global team read access
             var globalCollab =
-                await _kubernetesClient.Get<Collaborator>(globalCollabName, org);
+                await _kubernetesClient.Get<Collaborator>(globalCollabName, meta.NamespaceProperty);
             if (globalCollab == null)
             {
-                globalCollab = Collab.Create(
-                    meta.Name,
-                    github.Spec.GlobalTeam,
-                    org,
+                globalCollab = Collaborator.Init(
+                    meta.Name, 
+                    github.Spec.GlobalTeam, 
+                    org, 
                     Membership.Pull);
-
-                await _kubernetesClient.Create(globalCollab);
+                
+                await _kubernetesClient.Create(()=> globalCollab, globalCollab.Metadata.Name, meta.NamespaceProperty);
             }
         }
 
@@ -151,21 +155,18 @@ public class RepositoryController : IResourceController<Repository>
         if (spec.State == State.Archived)
         {
             var archiveCollab =
-                await _kubernetesClient.Get<Collaborator>(archiveCollabName, org);
+                await _kubernetesClient.Get<Collaborator>(archiveCollabName, meta.NamespaceProperty);
             if (archiveCollab == null)
             {
-                archiveCollab = Collab.Create(
-                    meta.Name,
-                    github.Spec.ArchiveTeam,
-                    org,
-                    Membership.Admin);
+                archiveCollab = Collaborator.Init(meta.Name, github.Spec.ArchiveTeam, org, Membership.Admin);
+                archiveCollab.Metadata.NamespaceProperty = meta.NamespaceProperty;
                 
                 await _kubernetesClient.Create(archiveCollab);
             }
         }
         else
         {
-            await _kubernetesClient.Delete<Collaborator>(archiveCollabName, org);
+            await _kubernetesClient.Delete<Collaborator>(archiveCollabName, meta.NamespaceProperty);
         }
 
         return null;
@@ -201,21 +202,22 @@ public class RepositoryController : IResourceController<Repository>
         }
 
         //remove global team access
-        var globalCollabName = Collab.GetCollabName(meta.Name, github.Spec.GlobalTeam);
-        await _kubernetesClient.Delete<Collaborator>(globalCollabName, entity.Spec.OrganizationNamespace);
+        var globalCollabName = Collaborator.GetCollabName(meta.Name, github.Spec.GlobalTeam);
+        await _kubernetesClient.Delete<Collaborator>(globalCollabName, entity.Metadata.NamespaceProperty);
 
         //confirm archiving
-        var archiveCollabName = Collab.GetCollabName(meta.Name, github.Spec.ArchiveTeam);
+        var archiveCollabName = Collaborator.GetCollabName(meta.Name, github.Spec.ArchiveTeam);
         var archiveCollab =
-            await _kubernetesClient.Get<Collaborator>(archiveCollabName, entity.Spec.OrganizationNamespace);
+            await _kubernetesClient.Get<Collaborator>(archiveCollabName, entity.Metadata.NamespaceProperty);
 
         if (archiveCollab == null)
         {
-            archiveCollab = Collab.Create(
-                meta.Name,
+            archiveCollab = Collaborator.Init(meta.Name,
                 github.Spec.ArchiveTeam,
                 entity.Spec.OrganizationNamespace,
                 Membership.Admin);
+
+            archiveCollab.Metadata.NamespaceProperty = meta.NamespaceProperty;
 
             await _kubernetesClient.Create(archiveCollab);
         }

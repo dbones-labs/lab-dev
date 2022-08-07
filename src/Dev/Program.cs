@@ -1,5 +1,3 @@
-using DotnetKubernetesClient;
-using k8s.Models;
 using KubeOps.Operator;
 using Octokit;
 

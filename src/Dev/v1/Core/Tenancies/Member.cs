@@ -13,7 +13,7 @@ public class MemberSpec
 
     [Required] public string Account { get; set; } = string.Empty;
     
-    public MemberRole Role { get; set; } = MemberRole.Member;
+    [AdditionalPrinterColumn] public MemberRole Role { get; set; } = MemberRole.Member;
 }
 
 public enum MemberRole
