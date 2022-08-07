@@ -2,6 +2,7 @@
 
 using System.Runtime.CompilerServices;
 using DotnetKubernetesClient;
+using k8s.Models;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
@@ -36,7 +37,7 @@ public class TeamMemberController  :  IResourceController<TeamMember>
         var spec = entity.Spec;
         var org = github.Spec.Organisation;
         
-        var team = await HttpAssist.Get(() => _kubernetesClient.Get<Dev.v1.Platform.Github.Team>(spec.Team, github.Metadata.NamespaceProperty));
+        var team = await HttpAssist.Get(() => _kubernetesClient.Get<Dev.v1.Platform.Github.Team>(spec.Team, entity.Metadata.NamespaceProperty));
         if (team == null) throw new Exception($"cannot find team {spec.Team}");
         if (!team.Status.Id.HasValue) throw new Exception($"missing id for team {spec.Team}");
 
@@ -63,7 +64,7 @@ public class TeamMemberController  :  IResourceController<TeamMember>
         var spec = entity.Spec;
         var org = github.Spec.Organisation;
         
-        var team = await _kubernetesClient.Get<Dev.v1.Platform.Github.Team>(spec.Team, org);
+        var team = await _kubernetesClient.Get<Dev.v1.Platform.Github.Team>(spec.Team, entity.Namespace());
         if (team == null) return;
         if (!team.Status.Id.HasValue) throw new Exception($"missing id for team {spec.Team}");
 
