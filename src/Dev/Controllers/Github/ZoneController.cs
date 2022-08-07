@@ -33,20 +33,29 @@ public class ZoneController : IResourceController<Zone>
         var organisation = entity.Metadata.NamespaceProperty;
         var zoneName = entity.Metadata.Name;
         
-        var ns = _kubernetesClient.Get<V1Namespace>(zoneName);
+        var ns = await _kubernetesClient.Get<V1Namespace>(zoneName);
         if (ns == null) throw new Exception($"cannot find zone namespace {zoneName}");
 
-        await _kubernetesClient.Ensure(() => new Repository()
+        try
         {
-            Spec = new()
+            await _kubernetesClient.Ensure(() => new Repository()
             {
-                EnforceCollaborators = false,
-                State = State.Active,
-                Type = Type.System,
-                Visibility = Visibility.Private,
-                OrganizationNamespace = organisation
-            }
-        }, zoneName, zoneName);
+                Spec = new()
+                {
+                    EnforceCollaborators = false,
+                    State = State.Active,
+                    Type = Type.System,
+                    Visibility = Visibility.Private,
+                    OrganizationNamespace = organisation
+                }
+            }, zoneName, zoneName);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
+        
 
 
         var platformTeams = await _kubernetesClient.List<Team>(
@@ -74,12 +83,13 @@ public class ZoneController : IResourceController<Zone>
             }
             
             //to add
-            var collabName = Collab.GetCollabName(zoneName, team);
-            await _kubernetesClient.Ensure(() => Collab.Create(
+            var collab = Collaborator.Init(
                 zoneName, 
-                team,
-                organisation,
-                Membership.Push), collabName, zoneName);
+                team, 
+                organisation, 
+                Membership.Push);
+
+            await _kubernetesClient.Ensure(() => collab, collab.Metadata.Name, zoneName);
         }
 
         //delete all old collabs

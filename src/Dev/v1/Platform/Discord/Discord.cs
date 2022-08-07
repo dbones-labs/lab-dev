@@ -13,7 +13,7 @@ public class Discord : CustomKubernetesEntity<DiscordSpec, DiscordStatus>
 public class DiscordSpec
 {
     public long Guild { get; set; }
-
+ 
     [Required] public string Credentials { get; set; } = string.Empty;
 }
 

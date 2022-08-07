@@ -20,17 +20,22 @@ public class ZoneSpec
     /// the name of the environment this belongs to
     /// </summary>
     [Required]
+    [AdditionalPrinterColumn]
     public string Environment { get; set; } = "production";
     
     /// <summary>
     /// aws, azure, on-prem, scaleway, etc
     /// </summary>
-    [Required] public string Cloud { get; set; } = string.Empty;
+    [Required]
+    [AdditionalPrinterColumn]
+    public string Cloud { get; set; } = string.Empty;
     
     /// <summary>
     /// where this zone is located
     /// </summary>
-    [Required] public string Region { get; set; } = string.Empty;
+    [Required]
+    [AdditionalPrinterColumn]
+    public string Region { get; set; } = string.Empty;
 }
 
 public class ZoneStatus

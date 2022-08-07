@@ -6,7 +6,7 @@ resources:
 - ./namespace.yaml
 - ../crds
 - ../rbac
-- ../operator
+#- ../operator
 images:
 - name: operator
   newName: public-docker-image-path

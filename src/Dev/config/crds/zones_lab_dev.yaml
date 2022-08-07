@@ -11,7 +11,23 @@ spec:
     singular: zone
   scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - description: the name of the environment this belongs to
+      jsonPath: .spec.environment
+      name: Environment
+      priority: 0
+      type: string
+    - description: aws, azure, on-prem, scaleway, etc
+      jsonPath: .spec.cloud
+      name: Cloud
+      priority: 0
+      type: string
+    - description: where this zone is located
+      jsonPath: .spec.region
+      name: Region
+      priority: 0
+      type: string
+    name: v1
     schema:
       openAPIV3Schema:
         properties:

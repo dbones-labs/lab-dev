@@ -181,7 +181,7 @@ metadata:
   labels:
     lab.dev/verison: 1
 spec:
-  credentials: rancher-account
+  technicalUser: user-krjz4
 
 ---
 
@@ -222,6 +222,31 @@ spec:
 # =========================================================
 
 
+apiVersion: lab.dev/v1
+kind: Environment
+metadata:
+  name: production
+  namespace: lab
+  labels:
+    lab.dev/verison: 1
+spec:
+  isProduction: true
+
+---
+
+apiVersion: lab.dev/v1
+kind: Environment
+metadata:
+  name: development
+  namespace: lab
+  labels:
+    lab.dev/verison: 1
+spec:
+  isProduction: false
+
+
+---
+
 
 # /frontier <--- zone repo
 #   kubernetes-aqua.yaml
@@ -238,8 +263,24 @@ metadata:
   labels:
     lab.dev/verison: 1
 spec:
-  environment: production #development , or custom
+  environment: production #development , see Environment
+  cloud: on-prem
+  region: uk
 
+---
+
+apiVersion: lab.dev/v1
+kind: Zone
+metadata:
+  name: apex
+  namespace: lab
+  labels:
+    lab.dev/verison: 1
+spec:
+  environment: development
+  cloud: on-prem
+  region: uk
+  
 ---
 
 # clusters represent pockets of compute, controlled by rancher

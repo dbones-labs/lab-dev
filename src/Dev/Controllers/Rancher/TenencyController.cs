@@ -94,6 +94,12 @@ public class TenancyController : IResourceController<Tenancy>
             } )
             .ToList();
 
+        //no filter, all access is allowed. 
+        if (!inMemoryQueryList.Any())
+        {
+            inMemoryQueryList = new List<Func<Zone, bool>> { _ => true };
+        }
+        
         var candidateZones = await _kubernetesClient.List<Zone>(entity.Metadata.NamespaceProperty, serverQueryList);
         
         candidateZones = candidateZones

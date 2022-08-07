@@ -42,13 +42,16 @@ public class TeamController  :  IResourceController<Team>
 
         Octokit.Team? team = null;
 
+        //get the team by id (incase name is chanaged)
         if (status.Id.HasValue) team = await HttpAssist.Get(() => _gitHubClient.Organization.Team.Get(status.Id.Value));
         if (team == null)
         {
+            //find by name (if the id was not set)
             var teams = await _gitHubClient.Organization.Team.GetAll(org);
             team = teams.FirstOrDefault(x => x.Name == meta.Name);
         }
 
+        //ok we are creating
         if (team == null)
         {
             team = await _gitHubClient.Organization.Team.Create(org, new NewTeam(meta.Name)
@@ -60,6 +63,7 @@ public class TeamController  :  IResourceController<Team>
 
         else
         {
+            //update, we need to figure out what to update tho
             string? updateDescription = null;
             TeamPrivacy? updateTeamPrivacy = null;
             bool shouldUpdate = false;
@@ -90,6 +94,7 @@ public class TeamController  :  IResourceController<Team>
             }
         }
 
+        //we need to store the id (this is how we know that we have created the team on Github)
         if (!status.Id.HasValue)
         {
             status.Id = team.Id;
