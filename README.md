@@ -210,6 +210,17 @@ spec:
   externalAccounts:
   - id: b0b-b
     provider: github
+
+
+apiVersion: lab.dev/v1
+kind: Account
+metadata:
+  name: dbones
+  namespace: lab
+spec:
+  externalAccounts:
+  - id: dbones
+    provider: github
     
 
 # each user/login, we will need to keep some ids for different accounts (which they create)
@@ -280,7 +291,7 @@ spec:
   environment: development
   cloud: on-prem
   region: uk
-  
+
 ---
 
 # clusters represent pockets of compute, controlled by rancher
@@ -337,16 +348,28 @@ spec:
 apiVersion: lab.dev/v1
 kind: Tenancy
 metadata:
-  name: galaxy
+  name: platform
   namespace: lab
   labels:
     lab.dev/verison: 1
 spec:
   isPlatform: true # signals this is a platform team
-  clusterFilter: regex-of-allowed-clusters # default all
+  # clusterFilter: regex-of-allowed-clusters  default all
 
 # setup Rancher Project, Github Team, Postgres Roles, Discord
 # rabbit does not seem to care
+
+apiVersion: lab.dev/v1
+kind: Tenancy
+metadata:
+  name: galaxy
+  namespace: lab
+  labels:
+    lab.dev/verison: 1
+spec:
+  isPlatform: false # signals this is a platform team
+
+
 
 ---
 
@@ -354,13 +377,48 @@ apiVersion: lab.dev/v1
 kind: Member
 metadata:
   name: dbones
+  namespace: platform
+  labels:
+    lab.dev/verison: 1
+spec:
+  account: dbones
+  role: Owner # Member, Owner, Guest
+
+---
+apiVersion: lab.dev/v1
+kind: Member
+metadata:
+  name: bob
   namespace: galaxy
   labels:
     lab.dev/verison: 1
 spec:
-  tenancy: platform
-  user: dbones
-  role: owner # member, owner, guest
+  account: bob
+  role: Owner
+
+---
+apiVersion: lab.dev/v1
+kind: Member
+metadata:
+  name: sammi
+  namespace: platform
+  labels:
+    lab.dev/verison: 1
+spec:
+  account: sammi
+  role: Member # Member, Owner, Guest
+---
+apiVersion: lab.dev/v1
+kind: Member
+metadata:
+  name: sammi
+  namespace: galaxy
+  labels:
+    lab.dev/verison: 1
+spec:
+  account: sammi
+  role: Guest # Member, Owner, Guest
+
 
 # Github Team update, postgres roles, rabbitmq
 
