@@ -6,6 +6,7 @@ using k8s.Models;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
+using v1.Core;
 using v1.Core.Services;
 
 
@@ -42,6 +43,14 @@ public class ZoneController : IResourceController<Zone>
         }
         
         await _kubernetesClient.Ensure(() => new V1Namespace(), entity.Metadata.Name);
+        
+        await _kubernetesClient.Ensure(() => new TenancyContext
+        {
+            Spec = new TenancyContextSpec()
+            {
+                OrganizationNamespace = entity.Metadata.NamespaceProperty
+            }
+        }, TenancyContext.GetName(), entity.Metadata.Name);
 
         return null;
     }
