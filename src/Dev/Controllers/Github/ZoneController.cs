@@ -45,7 +45,7 @@ public class ZoneController : IResourceController<Zone>
                     EnforceCollaborators = false,
                     State = State.Active,
                     Type = Type.System,
-                    Visibility = Visibility.Private,
+                    Visibility = Visibility.Internal,
                     OrganizationNamespace = organisation
                 }
             }, zoneName, zoneName);

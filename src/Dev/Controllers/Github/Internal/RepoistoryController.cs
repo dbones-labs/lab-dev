@@ -2,7 +2,6 @@
 
 using Dev.v1.Platform.Github;
 using DotnetKubernetesClient;
-using k8s.Models;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
@@ -113,11 +112,15 @@ public class RepositoryController : IResourceController<Repository>
                 
             }
         }
-
+        
         if (entity.Status.Id == null)
         {
             entity.Status.Id = repository.Id;
+            await _kubernetesClient.UpdateStatus(entity);
         }
+        
+        await SetupBranchProtection(repository);
+
 
         //this is a tenancy which we can raise FF access to
         if (entity.Spec.Type == Type.System)
@@ -170,6 +173,38 @@ public class RepositoryController : IResourceController<Repository>
         }
 
         return null;
+    }
+
+    private async Task SetupBranchProtection(Octokit.Repository repository)
+    {
+        //this requires github pro.
+        return;
+        
+        //setup branching rules
+        var main = await HttpAssist.Get(() => _gitHubClient.Repository.Branch.Get(repository.Id, "main"));
+        var protection =
+            await HttpAssist.Get(() => _gitHubClient.Repository.Branch.GetBranchProtection(repository.Id, "main"));
+
+        if (main == null) throw new Exception($"cannot find main branch for {repository.Name}");
+
+        if (protection == null || !main.Protected)
+        {
+            var rules = new BranchProtectionSettingsUpdate(
+                //Require status checks to pass before merging 
+                new BranchProtectionRequiredStatusChecksUpdate(false, Array.Empty<string>()),
+
+                //Require a pull request before merging 
+                new BranchProtectionRequiredReviewsUpdate(
+                    new BranchProtectionRequiredReviewsDismissalRestrictionsUpdate(false),
+                    true,
+                    true,
+                    1),
+
+                //new BranchProtectionPushRestrictionsUpdate(), 
+                true);
+
+            await _gitHubClient.Repository.Branch.UpdateBranchProtection(repository.Id, "main", rules);
+        }
     }
 
     private async Task EnsureLabel(Octokit.Repository repository, string name)
