@@ -5,7 +5,14 @@ using KubeOps.Operator.Entities;
 using KubeOps.Operator.Entities.Annotations;
 
 [KubernetesEntity(Group = "lab.dev", ApiVersion = "v1")]
-public class Github : CustomKubernetesEntity<GithubSpec, GithubStatus> { }
+public class Github : CustomKubernetesEntity<GithubSpec, GithubStatus>
+{
+    public bool IsGlobal(string team)
+    {
+        return team == Spec.GlobalTeam || team == Spec.ArchiveTeam;
+    }
+
+}
 
 public class GithubSpec
 {

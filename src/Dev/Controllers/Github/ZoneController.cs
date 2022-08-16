@@ -56,10 +56,8 @@ public class ZoneController : IResourceController<Zone>
             throw;
         }
         
-
-
         var platformTeams = await _kubernetesClient.List<Team>(
-            organisation,
+            null,
             new EqualsSelector(Team.PlatformLabel(), "True"));
         
         var collabs = await _kubernetesClient.List<Collaborator>(zoneName);
