@@ -71,37 +71,9 @@ public class TenancyController : IResourceController<Tenancy>
             })
             .ToArray();
         
-        //anything we cannot do as a selector, we do in mem :(
-        var inMemoryQueryList = entity.Spec.ZoneFilter
-            .Where(x => x.Operator == Operator.Pattern)
-            .Where(x => x.Operator == Operator.StartsWith)
-            .Select(x =>
-            {
-                //TODO REFACTOR
-                Func<Zone, bool> where = zone =>
-                {
-                    var key = x.Key;
-                    var filterForValue = x.Value;
-                    var hasLabel = zone.Metadata.Labels.TryGetValue(key, out var value);
-                    if (!hasLabel) return false;
-
-                    return (x.Operator == Operator.StartsWith)
-                        ? value.StartsWith(filterForValue)
-                        : Regex.IsMatch(value, filterForValue);
-                };
-
-                return where;
-            } )
-            .ToList();
-
-        //no filter, all access is allowed. 
-        if (!inMemoryQueryList.Any())
-        {
-            inMemoryQueryList = new List<Func<Zone, bool>> { _ => true };
-        }
-        
         var candidateZones = await _kubernetesClient.List<Zone>(entity.Metadata.NamespaceProperty, serverQueryList);
         
+        //anything we cannot do as a selector, we do in mem :(
         candidateZones = candidateZones
             .Where(x => entity.Spec.Where(x))
             .ToList();
