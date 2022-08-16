@@ -87,7 +87,11 @@ public class CollaboratorController  : IResourceController<Collaborator>
         var spec = entity.Spec;
         var org = github.Spec.Organisation;
 
-        var team = await _kubernetesClient.Get<Team>(spec.Team, org);
+        var name = github.IsGlobal(spec.Team)
+            ? spec.OrganizationNamespace // repo <- global team
+            : Team.GetTeamName(spec.Team); // repo <- tenancy team(-guest)
+        
+        var team = await _kubernetesClient.Get<Team>(spec.Team, name);
         if (team == null) return;
         if (!team.Status.Id.HasValue) throw new Exception("team does not have an id");
         
