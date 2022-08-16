@@ -125,6 +125,7 @@ public class TenancyController : IResourceController<Tenancy>
         await _kubernetesClient.Delete<Collaborator>(guestCollabName, tenancyName);
         
         await _kubernetesClient.Delete<Repository>(tenancyName, tenancyName);
+        await _kubernetesClient.Delete<Team>(tenancyName, tenancyName);
     }
 }
 

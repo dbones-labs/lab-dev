@@ -41,7 +41,7 @@ public class CollaboratorController  : IResourceController<Collaborator>
         Team? team = null;
         if (spec.OrganizationNamespace == entity.Metadata.NamespaceProperty)
         {
-            var name = spec.Team == github.Spec.GlobalTeam || spec.Team == github.Spec.ArchiveTeam
+            var name = github.IsGlobal(spec.Team)
                 ? spec.OrganizationNamespace // global repo <- global team
                 : spec.Team; // global repo <- tenancy Team
             
@@ -50,7 +50,7 @@ public class CollaboratorController  : IResourceController<Collaborator>
         }
         else
         {
-            var name = entity.Metadata.NamespaceProperty != spec.Team && !Team.IsGuestTeamName(spec.Team)
+            var name = github.IsGlobal(spec.Team)
                 ? spec.OrganizationNamespace // tenancy repo <- global team
                 : Team.GetTeamName(spec.Team); // tenancy repo <- tenancy team
             
