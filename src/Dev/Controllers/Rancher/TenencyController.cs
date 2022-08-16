@@ -103,7 +103,7 @@ public class TenancyController : IResourceController<Tenancy>
         var candidateZones = await _kubernetesClient.List<Zone>(entity.Metadata.NamespaceProperty, serverQueryList);
         
         candidateZones = candidateZones
-            .Where(x => inMemoryQueryList.All(filter => filter(x)))
+            .Where(x => entity.Spec.Where(x))
             .ToList();
         
         //we need to figure out
@@ -113,10 +113,11 @@ public class TenancyController : IResourceController<Tenancy>
         
         foreach (var candidateZone in candidateZones)
         {
-            if (removalCandidates.ContainsKey(candidateZone.Metadata.Name))
+            var zoneInTenancyName = $"{candidateZone.Metadata.Name}-{entity.Name()}";
+            if (removalCandidates.ContainsKey(zoneInTenancyName))
             {
                 //already have, skip
-                removalCandidates.Remove(candidateZone.Metadata.Name);
+                removalCandidates.Remove(zoneInTenancyName);
                 continue;
             }
             
