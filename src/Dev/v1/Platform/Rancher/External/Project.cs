@@ -40,7 +40,7 @@ public class ProjectSpec
 {
     [Required] public string? ClusterName { get; set; }
     [Required] public string DisplayName { get; set; }
-    public bool EnableProjectMonitoring { get; set; } = false;
+    //public bool EnableProjectMonitoring { get; set; } = false;
 }
 
 public class ProjectStatus

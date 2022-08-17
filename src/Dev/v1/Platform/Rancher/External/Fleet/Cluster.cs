@@ -10,7 +10,7 @@ using KubeOps.Operator.Entities.Annotations;
 /// </summary>
 [IgnoreEntity]
 [PartiallyMappedEntity]
-[KubernetesEntity(Group = "fleet.cattle.io", ApiVersion = "v1alpha1")]
+[KubernetesEntity(Group = "fleet.cattle.io", ApiVersion = "v1alpha1", PluralName = "clusters")]
 public class Cluster : CustomKubernetesEntity<ClusterSpec, ClusterStatus>
 {
     public static string NameLabel() => "management.cattle.io/cluster-display-name";

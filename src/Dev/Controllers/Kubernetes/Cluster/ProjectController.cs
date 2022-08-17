@@ -49,7 +49,18 @@ public class ProjectController : IResourceController<Project>
         if (string.IsNullOrEmpty(entity.Status.Id))
         {
             var selector = new EqualsSelector(Project.ProjectLabel(), label);
-            var projects = await _kubernetesClient.List<RancherProject>(cluster.Status.ClusterId, selector);
+            IList<RancherProject> projects;
+            try
+            {
+                
+                projects = await _kubernetesClient.List<RancherProject>(cluster.Status.ClusterId, selector);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+            
             var rancherProject = projects.FirstOrDefault() ?? await _kubernetesClient.Create(() =>
             {
                 
