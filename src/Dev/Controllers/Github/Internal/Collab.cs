@@ -8,6 +8,7 @@ using k8s;
 using k8s.Models;
 using KubeOps.Operator.Entities;
 using Marvin.JsonPatch;
+using Newtonsoft.Json;
 using Octokit;
 using v1.Core;
 using Organization = Octokit.Organization;
@@ -90,14 +91,18 @@ public static class KubernetesClientExtensions
         var crdMeta = typeof(T).GetCrdMeta();
         if (crdMeta == null) throw new Exception($"cannot find CRD info for {typeof(T)}");
 
-            
+        var serializedItemToUpdate = JsonConvert.SerializeObject(patch);
+        
+       
         await client.ApiClient.PatchNamespacedCustomObjectAsync(
-            new V1Patch(patch, V1Patch.PatchType.JsonPatch),
+            new V1Patch(serializedItemToUpdate, V1Patch.PatchType.JsonPatch),
             crdMeta.Group,
             crdMeta.ApiVersion,
             entity.Metadata.NamespaceProperty ?? "default",
             crdMeta.PluralName,
             entity.Metadata.Name);
+       
+
     }
     
     public static V1Namespace SetProject(this V1Namespace ns, string project, string? cluster = null)
