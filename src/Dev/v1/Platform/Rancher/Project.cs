@@ -11,7 +11,7 @@ using KubeOps.Operator.Entities.Annotations;
 [KubernetesEntity(Group = "rancher.internal.lab.dev", ApiVersion = "v1")]
 public class Project : CustomKubernetesEntity<ProjectSpec, ProjectStatus>
 {
-    public static string ProjectLabel() => "lab.dev/k8sProject";
+    public static string ProjectLabel() => "lab.dev/k8s-project";
 }
 
 public class ProjectSpec

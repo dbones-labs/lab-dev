@@ -54,7 +54,9 @@ public class TenancyController : IResourceController<Tenancy>
             {
                 Labels = new Dictionary<string, string>()
                 {
-                    { Team.PlatformLabel(), entity.Spec.IsPlatform ? "True" : "False" }
+                    { Team.PlatformLabel(), entity.Spec.IsPlatform ? "True" : "False" },
+                    { Team.TenancyLabel(), tenancyName },
+                    { Team.GuestLabel(), "False" }
                 }
             },
             Spec = new()
@@ -66,6 +68,14 @@ public class TenancyController : IResourceController<Tenancy>
         
         var guestTeam = _kubernetesClient.Ensure(() =>new Team
         {
+            Metadata = new V1ObjectMeta
+            {
+                Labels = new Dictionary<string, string>()
+                {
+                    { Team.TenancyLabel(), tenancyName },
+                    { Team.GuestLabel(), "True" }
+                }
+            },
             Spec = new()
             {
                 Type = Type.System,
