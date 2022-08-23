@@ -27,6 +27,8 @@ public class Team : CustomKubernetesEntity<TeamSpec, TeamStatus>
     }
 
     public static string PlatformLabel() => "github.lab.dev/platformTeam";
+    public static string TenancyLabel() => "github.lab.dev/tenancy";
+    public static string GuestLabel() => "github.lab.dev/guest";
 }
 
 public class TeamSpec
