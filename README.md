@@ -354,7 +354,8 @@ metadata:
     lab.dev/verison: 1
 spec:
   isPlatform: true # signals this is a platform team
-  # clusterFilter: regex-of-allowed-clusters  default all
+  # zoneFilter: regex-of-allowed-clusters  default all
+---
 
 # setup Rancher Project, Github Team, Postgres Roles, Discord
 # rabbit does not seem to care
@@ -367,8 +368,23 @@ metadata:
   labels:
     lab.dev/verison: 1
 spec:
-  isPlatform: false # signals this is a platform team
+  isPlatform: false
 
+---
+
+apiVersion: lab.dev/v1
+kind: Tenancy
+metadata:
+  name: pinoneers
+  namespace: lab
+  labels:
+    lab.dev/verison: 1
+spec:
+  isPlatform: true
+  zoneFilter:
+    - key: "lab.dev/environment"
+      operator: StartsWith
+      value: hi
 
 
 ---
