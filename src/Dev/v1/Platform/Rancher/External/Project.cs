@@ -16,8 +16,9 @@ public class Project : CustomKubernetesEntity<ProjectSpec, ProjectStatus>
     /// <summary>
     /// setup rancher project this what rancher requires pre-configured
     /// </summary>
-    public static void Init(Project project, string name, string creatorId, string clusterId)
+    public static Project Init(string name, string creatorId, string clusterId)
     {
+        var project = new Project();
         project.Metadata ??= new V1ObjectMeta();
         project.Metadata.Annotations ??= new Dictionary<string, string>();
         
@@ -39,6 +40,7 @@ public class Project : CustomKubernetesEntity<ProjectSpec, ProjectStatus>
 
         project.Spec.ClusterName = clusterId;
         project.Spec.DisplayName = name;
+        return project;
     }
 }
 

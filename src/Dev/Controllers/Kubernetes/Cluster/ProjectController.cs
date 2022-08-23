@@ -56,9 +56,7 @@ public class ProjectController : IResourceController<Project>
 
             var rancherProject = projects.FirstOrDefault() ?? await _kubernetesClient.Create(() =>
             {
-                var p = new RancherProject();
-                RancherProject.Init(
-                    p,
+                var p = RancherProject.Init(
                     entity.Spec.Tenancy,
                     rancher.Spec.TechnicalUser,
                     cluster.Status.ClusterId);
@@ -134,7 +132,7 @@ public class ProjectController : IResourceController<Project>
                 selector);
 
         var rancherProject = rancherProjects.FirstOrDefault();
-        if (rancherProject != null) await _kubernetesClient.Delete(rancherProject);;
+        if (rancherProject != null) await _kubernetesClient.Delete(rancherProject);
 
         var bindingSelector = new EqualsSelector(ProjectRoleTemplateBinding.RoleTenancy(), entity.Spec.Tenancy);
         var bindings = await _kubernetesClient.List<ProjectRoleTemplateBinding>(entity.Status.Id, bindingSelector);
