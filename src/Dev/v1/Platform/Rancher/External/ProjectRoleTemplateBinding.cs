@@ -89,8 +89,8 @@ public class ProjectRoleTemplateBinding : CustomKubernetesEntity
         
         r.ProjectName = $"{cluster}:{project}";
         r.RoleTemplateName = role;
-        r.UserName = user;
-        r.UserPrincipalName = $"github_team://{userPrincipal}";
+        //r.UserName = user;
+        r.UserPrincipalName = $"github_user://{userPrincipal}";
         
         return r;
     }
