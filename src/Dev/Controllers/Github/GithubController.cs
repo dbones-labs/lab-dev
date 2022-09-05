@@ -41,7 +41,7 @@ public class GithubController : IResourceController<Github>
             _logger.LogWarning("ensure that you add a github secret");
         }
 
-
+        //the main org repo
         await _kubernetesClient.Ensure(() => new Repository()
         {
             Spec = new()
@@ -53,7 +53,6 @@ public class GithubController : IResourceController<Github>
                 OrganizationNamespace = orgNs
             }
         }, orgNs, orgNs);
-
 
         var globalTeamName = entity.Spec.GlobalTeam;
         await _kubernetesClient.Ensure(() => new Team
@@ -74,7 +73,6 @@ public class GithubController : IResourceController<Github>
                 Visibility = Visibility.Private
             }
         }, archivedTeamName, orgNs);
-
 
         return null;
     }
