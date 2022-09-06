@@ -69,10 +69,16 @@ public class GitScope : IDisposable
         _repository = new LibGit2Sharp.Repository(_repoLocally);
         
         Commands.Stage(_repository, "*");
-        
-        foreach (var item in _repository.RetrieveStatus(new LibGit2Sharp.StatusOptions()))
+
+        var status = _repository.RetrieveStatus(new LibGit2Sharp.StatusOptions());
+        foreach (var item in status)
         {
             _logger.LogInformation("{path} {state}", item.FilePath, item.State);
+        }
+
+        if (!status.IsDirty)
+        {
+            return;
         }
         
         //TODO: tech user
