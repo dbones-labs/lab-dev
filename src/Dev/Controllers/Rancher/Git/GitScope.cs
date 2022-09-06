@@ -42,16 +42,22 @@ public class GitScope : IDisposable
         LibGit2Sharp.Repository.Clone(_gitBaseUrl, _repoLocally, co);
     }
 
-    public void Fetch(string branch = "main")
+    public void Fetch()
     {
-        using var repo = new LibGit2Sharp.Repository(_repoLocally);
+        _repository = new LibGit2Sharp.Repository(_repoLocally);
         
-        var remote = repo.Network.Remotes["origin"];
+        var remote = _repository.Network.Remotes["origin"];
         var refSpecs = remote.FetchRefSpecs.Select(x => x.Specification);
+        var fops = new FetchOptions();
+        fops.CredentialsProvider = (_, _, _) => new UsernamePasswordCredentials
+        {
+            Username = "dev-tu", //TODO add to the resource
+            Password = _context.Token
+        };
         
-        Commands.Fetch(repo, remote.Name, refSpecs, null, "");
+        Commands.Fetch(_repository, remote.Name, refSpecs, fops, "");
         
-        var inConflict = repo.RetrieveStatus(new StatusOptions()).Any(x => x.State == FileStatus.Conflicted);
+        var inConflict = _repository.RetrieveStatus(new StatusOptions()).Any(x => x.State == FileStatus.Conflicted);
         if (inConflict)
         {
             throw new Exception("cannot handle in conflict");
@@ -60,11 +66,13 @@ public class GitScope : IDisposable
 
     public void Commit(string message)
     {
-        using var repo = new LibGit2Sharp.Repository(_repoLocally);
+        _repository = new LibGit2Sharp.Repository(_repoLocally);
         
-        foreach (var item in repo.RetrieveStatus(new LibGit2Sharp.StatusOptions()))
+        Commands.Stage(_repository, "*");
+        
+        foreach (var item in _repository.RetrieveStatus(new LibGit2Sharp.StatusOptions()))
         {
-            _logger.LogDebug("{path} {state}", item.FilePath, item.State);
+            _logger.LogInformation("{path} {state}", item.FilePath, item.State);
         }
         
         //TODO: tech user
@@ -73,19 +81,20 @@ public class GitScope : IDisposable
         var committer = author;
 
         // Commit to the repository
-        var commit = repo.Commit(message, author, committer);
+        var commit = _repository.Commit(message, author, committer);
     }
 
 
     public void AddFile(string filePath)
     {
-        using var repo = new LibGit2Sharp.Repository(_repoLocally);
-        repo.Index.Add(filePath);
+        _repository = new LibGit2Sharp.Repository(_repoLocally);
+        var formattedFilePath = filePath.PathFormat();
+        _repository.Index.Add(formattedFilePath);
     }
 
     public void Push(string branchName)
     {
-        using var repo = new LibGit2Sharp.Repository(_repoLocally);
+        _repository = new LibGit2Sharp.Repository(_repoLocally);
         
         LibGit2Sharp.PushOptions options = new LibGit2Sharp.PushOptions();
         options.CredentialsProvider = new CredentialsHandler(
@@ -96,14 +105,14 @@ public class GitScope : IDisposable
                     Password = _context.Token
                 });
        
-        repo.Network.Push(repo.Branches[branchName], options);
+        _repository.Network.Push(_repository.Branches[branchName], options);
     }
  
     
     public void EnsureFile(string filePath, string content)
     {
         FolderHelpers.EnsureFile(_repoLocally, filePath, content);
-        AddFile(Path.Combine(_repoLocally, filePath));
+        AddFile(filePath);
     }
 
     public void RemoveFile(string filePath)
@@ -120,6 +129,7 @@ public class GitScope : IDisposable
     {
         //where possible try not to delete the local repo.
         //if(Directory.Exists(_repoLocally)) Directory.Delete(_repoLocally);
+        _repository?.Dispose();
         _context.Unlock();
     }
 

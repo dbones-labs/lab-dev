@@ -44,7 +44,7 @@ public class TenancyController : IResourceController<Tenancy>
         if (org == null) throw new Exception("please ensure you add an Organisation");
         
         var orgNs = org.Metadata.NamespaceProperty;
-        var templatesBase = "./Controllers/Rancher/Git/Tenancies";
+        var templatesBase = "Controllers/Rancher/Git/Tenancies";
         
         using var gitScope = await _gitService.BeginScope("fleet", orgNs);
         try
@@ -53,13 +53,13 @@ public class TenancyController : IResourceController<Tenancy>
             gitScope.Fetch();
             
             //attach the tenancy so it can deploy to a tenancy (this only happens once per cluster)
-            var content = _templating.Render(Path.Combine(templatesBase, "./tenancy.yaml"), new { Name = entity.Name() });
-            gitScope.EnsureFile($"./tenancies/{entity.Name()}.yaml", content);
+            var content = _templating.Render(Path.Combine(templatesBase, "tenancy.yaml"), new { Name = entity.Name() });
+            gitScope.EnsureFile($"tenancies/{entity.Name()}.yaml", content);
 
             gitScope.Commit($"updated tenancy - {entity.Name()}");
             gitScope.Push("main");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             gitScope.CleanUp();
             throw;

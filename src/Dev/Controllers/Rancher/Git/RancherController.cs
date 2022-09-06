@@ -34,7 +34,7 @@ public class RancherController : IResourceController<Rancher>
         if (org == null) throw new Exception("please ensure you add an Organisation");
 
         var orgNs = org.Metadata.NamespaceProperty;
-        var templatesBase = "./Controllers/Rancher/Git/Org";
+        var templatesBase = "Controllers/Rancher/Git/Org";
 
         using var gitScope = await _gitService.BeginScope("fleet", orgNs);
         try
@@ -43,16 +43,16 @@ public class RancherController : IResourceController<Rancher>
             gitScope.Fetch();
             
             //generic permission (Cluster Roles) to be available in all clusters
-            var content = _templating.Render(Path.Combine(templatesBase, "./org-roles.yaml"), new { });
-            gitScope.EnsureFile("./org/org-roles.yaml", content);
+            var content = _templating.Render(Path.Combine(templatesBase, "org-roles.yaml"));
+            gitScope.EnsureFile("org/org-roles.yaml", content);
             
-            content = _templating.Render(Path.Combine(templatesBase, "./service-roles.yaml"), new { });
-            gitScope.EnsureFile("./org/service-roles.yaml", content);
+            content = _templating.Render(Path.Combine(templatesBase, "service-roles.yaml"));
+            gitScope.EnsureFile("org/service-roles.yaml", content);
 
             gitScope.Commit("updated the org");
             gitScope.Push("main");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             gitScope.CleanUp();
             throw;

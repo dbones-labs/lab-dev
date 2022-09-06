@@ -9,7 +9,7 @@ public class GitService
     private readonly IKubernetesClient _kubernetesClient;
     private readonly ILogger<GitService> _logger;
     private volatile bool _scopeInUse;
-    private string _repositoryDirectory = Path.Combine(Directory.GetCurrentDirectory(), "fleet-repos");
+    private string _repositoryDirectory = Path.Combine(FolderHelpers.BaseDirectory, "fleet-repos");
 
     public GitService(
         IKubernetesClient kubernetesClient,
