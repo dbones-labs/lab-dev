@@ -1,3 +1,4 @@
+using Dev.Controllers.Rancher.Git;
 using KubeOps.Operator;
 using Octokit;
 
@@ -8,6 +9,8 @@ builder.Services.AddKubernetesOperator();
 
 builder.Services.AddTransient<GitHubClient>(_ => new GitHubClient(new ProductHeaderValue("lab.dev")));
 builder.Services.AddTransient<IGitHubClient>(provider => provider.GetRequiredService<GitHubClient>());
+builder.Services.AddSingleton<GitService>();
+builder.Services.AddSingleton<Templating>();
 
 var app = builder.Build();
 app.UseKubernetesOperator();

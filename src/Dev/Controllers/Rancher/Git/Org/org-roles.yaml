@@ -1,0 +1,47 @@
+﻿---
+  apiVersion: rbac.authorization.k8s.io/v1
+  kind: ClusterRole
+  metadata:
+    labels:
+      lab.dev: "true"
+    name: lab
+  rules:
+    - apiGroups:
+        - '*'
+      resources:
+        - namespaces
+      verbs:
+        - create
+        - delete
+        - list
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    lab.dev: "true"
+  name: lab
+rules:
+  - apiGroups:
+      - '*'
+    resources:
+      - '*'
+    verbs:
+      - get
+      - watch
+      - list
+  - apiGroups:
+      - '*'
+    resources:
+      - secrets
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - update
+      - patch
+
+---

@@ -20,7 +20,20 @@
         <PackageReference Include="LibGit2Sharp" Version="0.26.2" />
         <PackageReference Include="Marvin.JsonPatch" Version="2.2.1" />
         <PackageReference Include="Octokit" Version="0.52.0" />
+        <PackageReference Include="Scriban" Version="5.5.0" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Update="Controllers\Rancher\Git\Org\org-roles.yaml">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="Controllers\Rancher\Git\Org\service-roles.yaml">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="Controllers\Rancher\Git\Tenancies\tenancy.yaml">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
 </Project>

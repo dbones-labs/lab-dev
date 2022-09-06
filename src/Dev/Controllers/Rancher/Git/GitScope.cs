@@ -105,10 +105,20 @@ public class GitScope : IDisposable
         FolderHelpers.EnsureFile(_repoLocally, filePath, content);
         AddFile(Path.Combine(_repoLocally, filePath));
     }
+
+    public void RemoveFile(string filePath)
+    {
+        var path = Path.Combine(_repoLocally, filePath);
+        if (File.Exists(path))
+        {
+            File.Delete(filePath);
+        }
+    }
     
     
     public void Dispose()
     {
+        //where possible try not to delete the local repo.
         //if(Directory.Exists(_repoLocally)) Directory.Delete(_repoLocally);
         _context.Unlock();
     }
@@ -116,6 +126,7 @@ public class GitScope : IDisposable
 
     public void CleanUp()
     {
+        //TODO: test the delete logic here.
         //if(Directory.Exists(_repoLocally)) Directory.Delete(_repoLocally);
     }
 }

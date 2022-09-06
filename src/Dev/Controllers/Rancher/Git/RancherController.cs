@@ -12,15 +12,18 @@ public class RancherController : IResourceController<Rancher>
 {
     private readonly IKubernetesClient _kubernetesClient;
     private readonly GitService _gitService;
+    private readonly Templating _templating;
     private readonly ILogger<RancherController> _logger;
 
     public RancherController( 
         IKubernetesClient kubernetesClient,
         GitService gitService,
+        Templating templating,
         ILogger<RancherController> logger)
     {
         _kubernetesClient = kubernetesClient;
         _gitService = gitService;
+        _templating = templating;
         _logger = logger;
     }
 
@@ -31,6 +34,7 @@ public class RancherController : IResourceController<Rancher>
         if (org == null) throw new Exception("please ensure you add an Organisation");
 
         var orgNs = org.Metadata.NamespaceProperty;
+        var templatesBase = "./Controllers/Rancher/Git/Org";
 
         using var gitScope = await _gitService.BeginScope("fleet", orgNs);
         try
@@ -38,10 +42,12 @@ public class RancherController : IResourceController<Rancher>
             gitScope.Clone();
             gitScope.Fetch();
             
-            //todo: this.
             //generic permission (Cluster Roles) to be available in all clusters
-            gitScope.EnsureFile("./org/cluster-permissions.yaml", "yaml content");
-            gitScope.EnsureFile("./org/namespace-permissions.yaml", "yaml content");
+            var content = _templating.Render(Path.Combine(templatesBase, "./org-roles.yaml"), new { });
+            gitScope.EnsureFile("./org/org-roles.yaml", content);
+            
+            content = _templating.Render(Path.Combine(templatesBase, "./service-roles.yaml"), new { });
+            gitScope.EnsureFile("./org/service-roles.yaml", content);
 
             gitScope.Commit("updated the org");
             gitScope.Push("main");

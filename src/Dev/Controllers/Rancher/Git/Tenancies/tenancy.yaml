@@ -1,0 +1,35 @@
+﻿apiVersion: v1
+kind: ServiceAccount
+metadata:
+  namespace: cattle-fleet-system
+  name: {{name}}
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{name}}-default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: lab
+subjects:
+  - kind: ServiceAccount
+    name: {{name}}
+    namespace: cattle-fleet-system
+  
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{name}}-default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: lab
+subjects:
+  - kind: ServiceAccount
+    name: {{name}}
+    namespace: cattle-fleet-system
