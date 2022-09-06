@@ -1,5 +1,6 @@
 ﻿namespace Dev.Controllers.Rancher.Git;
 
+using System.Reflection;
 using System.Security.Cryptography;
 
 public static class FolderHelpers 
@@ -63,5 +64,13 @@ public static class FolderHelpers
     {
         return Directory.EnumerateFileSystemEntries(path).Any();
     }
-    
+
+    public static string BaseDirectory { get; } = Directory.GetParent(Assembly.GetEntryAssembly().Location).FullName;
+
+    public static string PathFormat(this string filePath)
+    {
+        var os = Environment.OSVersion;
+        return os.Platform == PlatformID.Win32NT ? filePath.Replace("/", "\\") : filePath;
+    }
+
 }
