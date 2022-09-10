@@ -34,6 +34,12 @@
       <None Update="Controllers\Rancher\Git\Tenancies\tenancy.yaml">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
+      <None Update="Controllers\Rancher\Git\Services\fleet.yaml">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="Controllers\Rancher\Git\Services\service.yaml">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
 </Project>

@@ -16,6 +16,8 @@ public class OrganizationSpec
 
     public bool ProductionAccessWorkFlow { get; set; } = true;
     //public string ProductionName { get; set; } = "production";
+
+    public string? Engineering { get; set; } = "engineering";
 }
 
 public class OrganizationStatus

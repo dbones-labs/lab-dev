@@ -1,9 +1,11 @@
 ﻿namespace Dev.v1.Core.Services;
 
+using k8s.Models;
 using KubeOps.Operator.Entities;
 using KubeOps.Operator.Entities.Annotations;
 using Platform.Github;
 
+[KubernetesEntity(Group = "lab.dev", ApiVersion = "v1")]
 public class Service : CustomKubernetesEntity<ServiceSpec, ServiceStatus>
 {
     
@@ -12,7 +14,7 @@ public class Service : CustomKubernetesEntity<ServiceSpec, ServiceStatus>
 public class ServiceSpec
 {
     [AdditionalPrinterColumn] public Visibility Visibility { get; set; } = Visibility.Internal;
-    public List<Zone> Zones { get; set; } = new();
+    public List<ZoneEntry> Zones { get; set; } = new();
 }
 
 public class ZoneEntry

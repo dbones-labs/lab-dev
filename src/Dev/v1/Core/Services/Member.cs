@@ -13,7 +13,7 @@ using KubeOps.Operator.Entities.Annotations;
 [KubernetesEntity(Group = "lab.dev", ApiVersion = "v1")]
 public class TenancyInZone : CustomKubernetesEntity<TenancyInZoneSpec, TenancyInZoneStatus>
 {
-    public static string ZoneTenancyLabel() => "lab.dev/zoneTenancy";
+    public static string ZoneTenancyLabel() => "lab.dev/zone-tenancy";
 }
 
 public class TenancyInZoneSpec

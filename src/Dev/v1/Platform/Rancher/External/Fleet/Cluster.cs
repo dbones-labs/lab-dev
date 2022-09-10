@@ -15,6 +15,7 @@ public class Cluster : CustomKubernetesEntity<ClusterSpec, ClusterStatus>
 {
     public static string NameLabel() => "management.cattle.io/cluster-display-name";
     public static string IdLabel() => "management.cattle.io/cluster-name";
+    public static string Name() => "lab.dev/name";
 }
 
 public class ClusterSpec

@@ -82,9 +82,13 @@ spec:
 
                   (remove teams, repos, including archived)
                 type: boolean
+              technicalUser:
+                description: the technical user which will be used to modify github with
+                type: string
             required:
             - organisation
             - credentials
+            - technicalUser
             type: object
         type: object
     served: true

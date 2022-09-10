@@ -1,0 +1,62 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: services.lab.dev
+spec:
+  group: lab.dev
+  names:
+    kind: Service
+    listKind: ServiceList
+    plural: services
+    singular: service
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.visibility
+      name: Visibility
+      priority: 0
+      type: string
+    name: v1
+    schema:
+      openAPIV3Schema:
+        properties:
+          status:
+            description: Status object for the entity.
+            properties: {}
+            type: object
+          spec:
+            description: Specification of the kubernetes object.
+            properties:
+              visibility:
+                enum:
+                - Public
+                - Internal
+                - Private
+                type: string
+              zones:
+                items:
+                  properties:
+                    name:
+                      type: string
+                    components:
+                      items:
+                        properties:
+                          name:
+                            type: string
+                          provider:
+                            type: string
+                        required:
+                        - name
+                        - provider
+                        type: object
+                      type: array
+                  required:
+                  - name
+                  type: object
+                type: array
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

@@ -8,6 +8,7 @@ using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
 using v1.Components.Kubernetes;
 using v1.Core;
+using v1.Core.Services;
 using v1.Platform.Github;
 using v1.Platform.Rancher;
 using v1.Platform.Rancher.External;
@@ -86,7 +87,7 @@ public class ProjectController : IResourceController<Project>
         if (team == null) throw new Exception($"cannot find github team for {entity.Spec.Tenancy}");
         if (!team.Status.Id.HasValue) throw new Exception($"github team is not synced (yet) - {entity.Spec.Tenancy}");
         
-        var roleName = cluster.Status.IsProduction
+        var roleName = cluster.Status.Type == EnvironmentType.Production
             ? rancher.Spec.TenancyProductionMemberRole
             : rancher.Spec.TenancyMemberRole;
 

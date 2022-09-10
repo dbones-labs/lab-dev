@@ -11,21 +11,20 @@ public class GitRepo : CustomKubernetesEntity<GitRepoSpec, GitRepoStatus> { }
 
 public class GitRepoSpec
 {
-    [Required] public string Branch { get; set; }
-    [Required] public string ClientSecretName { get; set; }
+    [Required] public string Repo { get; set; } = string.Empty;
+    [Required] public string Branch { get; set; } = string.Empty;
+    [Required] public string ClientSecretName { get; set; } = string.Empty;
     public bool InsecureSkipTLSVerify { get; set; } = false;
-    [Required] public string Repo { get; set; }
+    public string? ServiceAccount { get; set; }
+    public List<string> Paths { get; set; } = new();
+    public List<ClusterSelector> Targets { get; set; } = new();
 }
 
 public class ClusterSelector
 {
-    
+    public string? ClusterGroup { get; set; }
+    public List<MatchSelector>? MatchExpressions { get; set; }
 }
 
-public class MatchSelector
-{
-    public string Key { get; set; }
-    public string Operator { get; set; }
-}
 
 public class GitRepoStatus {}

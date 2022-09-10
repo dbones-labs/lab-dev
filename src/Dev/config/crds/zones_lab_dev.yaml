@@ -34,8 +34,12 @@ spec:
           status:
             description: Status object for the entity.
             properties:
-              isProduction:
-                type: boolean
+              type:
+                enum:
+                - Production
+                - PreProduction
+                - Engineering
+                type: string
             type: object
           spec:
             description: Specification of the kubernetes object.
@@ -49,6 +53,9 @@ spec:
               region:
                 description: where this zone is located
                 type: string
+              isControl:
+                description: denotes is this cluster is where rancher is running
+                type: boolean
             required:
             - environment
             - cloud

@@ -10,7 +10,6 @@ public class GitScope : IDisposable
     private readonly ILogger _logger;
     private readonly string _gitBaseUrl;
     private readonly string _repoLocally;
-    private LibGit2Sharp.Repository _repository; 
 
     internal GitScope(GitContext context, ILogger logger)
     {
@@ -35,29 +34,29 @@ public class GitScope : IDisposable
         CloneOptions co = new CloneOptions();
         co.CredentialsProvider = (_, _, _) => new UsernamePasswordCredentials
         {
-            Username = "dev-tu", //TODO add to the resource
+            Username = _context.Github.Spec.TechnicalUser,
             Password = _context.Token
         };
         
-        LibGit2Sharp.Repository.Clone(_gitBaseUrl, _repoLocally, co);
+        Repository.Clone(_gitBaseUrl, _repoLocally, co);
     }
 
     public void Fetch()
     {
-        _repository = new LibGit2Sharp.Repository(_repoLocally);
+        using var repository = new Repository(_repoLocally);
         
-        var remote = _repository.Network.Remotes["origin"];
+        var remote = repository.Network.Remotes["origin"];
         var refSpecs = remote.FetchRefSpecs.Select(x => x.Specification);
         var fops = new FetchOptions();
         fops.CredentialsProvider = (_, _, _) => new UsernamePasswordCredentials
         {
-            Username = "dev-tu", //TODO add to the resource
+            Username = _context.Github.Spec.TechnicalUser,
             Password = _context.Token
         };
         
-        Commands.Fetch(_repository, remote.Name, refSpecs, fops, "");
+        Commands.Fetch(repository, remote.Name, refSpecs, fops, "");
         
-        var inConflict = _repository.RetrieveStatus(new StatusOptions()).Any(x => x.State == FileStatus.Conflicted);
+        var inConflict = repository.RetrieveStatus(new StatusOptions()).Any(x => x.State == FileStatus.Conflicted);
         if (inConflict)
         {
             throw new Exception("cannot handle in conflict");
@@ -66,52 +65,50 @@ public class GitScope : IDisposable
 
     public void Commit(string message)
     {
-        _repository = new LibGit2Sharp.Repository(_repoLocally);
-        
-        Commands.Stage(_repository, "*");
+        using var repository = new Repository(_repoLocally);
 
-        var status = _repository.RetrieveStatus(new LibGit2Sharp.StatusOptions());
-        foreach (var item in status)
-        {
-            _logger.LogInformation("{path} {state}", item.FilePath, item.State);
-        }
-
+        var status = repository.RetrieveStatus(new StatusOptions());
         if (!status.IsDirty)
         {
+            _logger.LogInformation("no changes for {Repo}", _context.Repository.Name());
             return;
         }
         
-        //TODO: tech user
+        foreach (var item in status)
+        {
+            _logger.LogDebug("{Path} {State}", item.FilePath, item.State);
+        }
+        
         // Create the committer's signature and commit
-        var author = new Signature("dev-tu", "@techuser", DateTime.Now);
+        var author = new Signature(_context.Github.Spec.TechnicalUser, "@techuser", DateTime.Now);
         var committer = author;
 
         // Commit to the repository
-        var commit = _repository.Commit(message, author, committer);
+        repository.Commit(message, author, committer);
     }
 
 
     public void AddFile(string filePath)
     {
-        _repository = new LibGit2Sharp.Repository(_repoLocally);
+        using var repository = new Repository(_repoLocally);
         var formattedFilePath = filePath.PathFormat();
-        _repository.Index.Add(formattedFilePath);
+        repository.Index.Add(formattedFilePath);
+        Commands.Stage(repository, formattedFilePath);
     }
 
     public void Push(string branchName)
     {
-        _repository = new LibGit2Sharp.Repository(_repoLocally);
+        using var repository = new Repository(_repoLocally);
         
-        LibGit2Sharp.PushOptions options = new LibGit2Sharp.PushOptions();
-        options.CredentialsProvider = new CredentialsHandler(
-            (url, usernameFromUrl, types) =>
-                new UsernamePasswordCredentials()
-                {
-                    Username = "dev-tu", //TODO add to the resource
-                    Password = _context.Token
-                });
+        PushOptions options = new PushOptions();
+        options.CredentialsProvider = (url, usernameFromUrl, types) =>
+            new UsernamePasswordCredentials()
+            {
+                Username = _context.Github.Spec.TechnicalUser,
+                Password = _context.Token
+            };
        
-        _repository.Network.Push(_repository.Branches[branchName], options);
+        repository.Network.Push(repository.Branches[branchName], options);
     }
  
     
@@ -135,14 +132,12 @@ public class GitScope : IDisposable
     {
         //where possible try not to delete the local repo.
         //if(Directory.Exists(_repoLocally)) Directory.Delete(_repoLocally);
-        _repository?.Dispose();
         _context.Unlock();
     }
 
 
     public void CleanUp()
     {
-        //TODO: test the delete logic here.
-        //if(Directory.Exists(_repoLocally)) Directory.Delete(_repoLocally);
+        if(Directory.Exists(_repoLocally)) Directory.Delete(_repoLocally);
     }
 }

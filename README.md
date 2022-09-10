@@ -148,11 +148,11 @@ metadata:
   labels:
     lab.dev/verison: 1
 spec:
-  org: platform
-  visibility: internal
-  globalTeam: in-the-lab
-  credentials: github-account
   archive: true
+  credentials: github-account
+  globalTeam: in-the-lab
+  organisation: fox-in-the-lab
+  technicalUser: dev-tu
 
 # github acc to call its api's with
 # need one for Rancher, Vault, RabbitMq, Discord, etc
@@ -200,6 +200,7 @@ spec:
   - id: 5ammi-b
     provider: github
 
+---
 
 apiVersion: lab.dev/v1
 kind: Account
@@ -211,6 +212,7 @@ spec:
   - id: b0b-b
     provider: github
 
+---
 
 apiVersion: lab.dev/v1
 kind: Account
@@ -353,8 +355,8 @@ metadata:
   labels:
     lab.dev/verison: 1
 spec:
-  isPlatform: true # signals this is a platform team
-  # zoneFilter: regex-of-allowed-clusters  default all
+  isPlatform: true
+
 ---
 
 # setup Rancher Project, Github Team, Postgres Roles, Discord
@@ -386,7 +388,6 @@ spec:
       operator: StartsWith
       value: hi
 
-
 ---
 
 apiVersion: lab.dev/v1
@@ -413,6 +414,7 @@ spec:
   role: Owner
 
 ---
+
 apiVersion: lab.dev/v1
 kind: Member
 metadata:
@@ -423,6 +425,7 @@ metadata:
 spec:
   account: sammi
   role: Member # Member, Owner, Guest
+
 ---
 apiVersion: lab.dev/v1
 kind: Member

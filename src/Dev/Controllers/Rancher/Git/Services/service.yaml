@@ -1,0 +1,36 @@
+﻿---
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  annotations:
+    field.cattle.io/containerDefaultResourceLimit: '{}'
+    field.cattle.io/projectId: {{kubernetesId}}:{{projectId}}
+    field.cattle.io/resourceQuota: '{"limit" : {} }'
+    lifecycle.cattle.io/create.namespace-auth: "true"
+  finalizers:
+    - controller.cattle.io/namespace-auth
+  labels:
+    field.cattle.io/projectId: {{projectId}}
+  name: {{service}}
+spec:
+  finalizers:
+    - kubernetes
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{tenancy}}-{{service}}
+  namespace: {{service}}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: lab-tenancy
+subjects:
+  - kind: ServiceAccount
+    name: {{tenancy}}
+    namespace: cattle-fleet-system
+
+---

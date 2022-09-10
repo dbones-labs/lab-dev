@@ -57,6 +57,11 @@ public class GithubSpec
     /// (remove teams, repos, including archived)
     /// </summary>
     public bool CleanUp { get; set; } = false;
+
+    /// <summary>
+    /// the technical user which will be used to modify github with
+    /// </summary>
+    [Required] public string TechnicalUser { get; set; }
 }
 
 public class GithubStatus
