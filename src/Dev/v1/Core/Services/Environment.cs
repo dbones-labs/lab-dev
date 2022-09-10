@@ -11,12 +11,37 @@ public class Environment : CustomKubernetesEntity<EnvironmentSpec, EnvironmentSt
 
 public class EnvironmentSpec
 {
-   /// <summary>  
-   /// is this environment a production one
+   // /// <summary>  
+   // /// is this environment a production one
+   // /// </summary>
+   // [Required]
+   // [AdditionalPrinterColumn] 
+   // public bool IsProduction { get; set; }
+
+   /// <summary>
+   /// the type of environment this is
    /// </summary>
    [Required]
    [AdditionalPrinterColumn] 
-   public bool IsProduction { get; set; }
+   public EnvironmentType Type { get; set; } = EnvironmentType.PreProduction;
+}
+
+public enum EnvironmentType
+{
+   /// <summary>
+   /// Live, Production zones, where the company hosts is systems
+   /// </summary>
+   Production,
+   
+   /// <summary>
+   /// Pre production environments to ensure new features work as planned.
+   /// </summary>
+   PreProduction,
+   
+   /// <summary>
+   /// local development, like a developer machine
+   /// </summary>
+   Engineering
 }
 
 public class EnvironmentStatus {}

@@ -26,7 +26,7 @@ public class Team : CustomKubernetesEntity<TeamSpec, TeamStatus>
         return teamName.EndsWith("-guest");
     }
 
-    public static string PlatformLabel() => "github.lab.dev/platformTeam";
+    public static string PlatformLabel() => "github.lab.dev/platform-team";
     public static string TenancyLabel() => "github.lab.dev/tenancy";
     public static string GuestLabel() => "github.lab.dev/guest";
 }

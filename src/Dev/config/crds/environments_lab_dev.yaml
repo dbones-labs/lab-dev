@@ -12,11 +12,11 @@ spec:
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - description: "          is this environment a production one\n          "
-      jsonPath: .spec.isProduction
-      name: IsProduction
+    - description: the type of environment this is
+      jsonPath: .spec.type
+      name: Type
       priority: 0
-      type: boolean
+      type: string
     name: v1
     schema:
       openAPIV3Schema:
@@ -28,11 +28,15 @@ spec:
           spec:
             description: Specification of the kubernetes object.
             properties:
-              isProduction:
-                description: "          is this environment a production one\n          "
-                type: boolean
+              type:
+                description: the type of environment this is
+                enum:
+                - Production
+                - PreProduction
+                - Engineering
+                type: string
             required:
-            - isProduction
+            - type
             type: object
         type: object
     served: true

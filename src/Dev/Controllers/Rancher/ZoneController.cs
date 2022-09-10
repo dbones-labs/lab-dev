@@ -36,9 +36,9 @@ public class ZoneController : IResourceController<Zone>
         var env = environments.FirstOrDefault(x => x.Metadata.Name == entity.Spec.Environment);
         if (env == null) throw new Exception($"cannot find environment {entity.Spec.Environment}");
 
-        if (entity.Status.IsProduction != env.Spec.IsProduction)
+        if (entity.Status.Type != env.Spec.Type)
         {
-            entity.Status.IsProduction = env.Spec.IsProduction;
+            entity.Status.Type = env.Spec.Type;
             await _kubernetesClient.UpdateStatus(entity);
         }
         

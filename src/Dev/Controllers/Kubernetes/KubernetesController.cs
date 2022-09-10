@@ -2,6 +2,7 @@
 
 using DotnetKubernetesClient;
 using Github.Internal;
+using k8s.Models;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
@@ -49,17 +50,21 @@ public class KubernetesController : IResourceController<Cluster>
         if (zone == null) throw new Exception($"cannot find zone {zoneName}");
         
         //we need to update all of these due to the zone.
-        
-        var fl = fleetCluster.Metadata.Labels;
-        await _kubernetesClient.UpsertCrdLabel(fleetCluster, new Dictionary<string, string?>(fl)
+
+        if (!zone.Spec.IsControl)
         {
-            [Zone.CloudLabel()] = zone.Spec.Cloud,
-            [Zone.EnvironmentLabel()] = zone.Spec.Environment,
-            [Zone.RegionLabel()] = zone.Spec.Region,
-            [Zone.ZoneLabel()] = zone.Metadata.Name,
-            [Zone.ProductionLabel()] = zone.Status.IsProduction.ToString()
-        });
-        
+            //only update all of the delivery and engineering clusters!
+            var fl = fleetCluster.Metadata.Labels;
+            await _kubernetesClient.UpsertCrdLabel(fleetCluster, new Dictionary<string, string?>(fl)
+            {
+                [FleetCluster.Name()] = entity.Name(),
+                [Zone.CloudLabel()] = zone.Spec.Cloud,
+                [Zone.EnvironmentLabel()] = zone.Spec.Environment,
+                [Zone.RegionLabel()] = zone.Spec.Region,
+                [Zone.ZoneLabel()] = zone.Metadata.Name,
+                [Zone.EnvironmentTypeLabel()] = zone.Status.Type.ToString()
+            });
+        }
         // var rl = rancherCluster.Metadata.Labels;
         // await _kubernetesClient.UpsertCrdLabel(rancherCluster, new Dictionary<string, string?>(rl)
         // {
@@ -75,7 +80,10 @@ public class KubernetesController : IResourceController<Cluster>
         entity.Status.Cloud = zone.Spec.Cloud;
         entity.Status.Environment = zone.Spec.Environment;
         entity.Status.Region = zone.Spec.Region;
-        entity.Status.IsProduction = zone.Status.IsProduction;
+        entity.Status.Type = zone.Status.Type;
+        entity.Status.Zone = zone.Name();
+        entity.Status.IsControl = zone.Spec.IsControl;
+        
         await _kubernetesClient.UpdateStatus(entity);
 
         return null;

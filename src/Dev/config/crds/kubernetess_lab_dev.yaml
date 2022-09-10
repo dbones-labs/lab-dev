@@ -28,7 +28,13 @@ spec:
                 type: string
               region:
                 type: string
-              isProduction:
+              type:
+                enum:
+                - Production
+                - PreProduction
+                - Engineering
+                type: string
+              isControl:
                 type: boolean
             type: object
           spec:

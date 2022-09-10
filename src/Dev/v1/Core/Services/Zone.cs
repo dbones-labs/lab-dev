@@ -11,7 +11,7 @@ public class Zone : CustomKubernetesEntity<ZoneSpec, ZoneStatus>
     public static string RegionLabel() => "lab.dev/region";
     public static string CloudLabel() => "lab.dev/cloud";
     public static string ZoneLabel() => "lab.dev/zone";
-    public static string ProductionLabel() => "lab.dev/isProd";
+    public static string EnvironmentTypeLabel() => "lab.dev/env-type";
 }
 
 public class ZoneSpec
@@ -36,9 +36,16 @@ public class ZoneSpec
     [Required]
     [AdditionalPrinterColumn]
     public string Region { get; set; } = string.Empty;
+
+    /// <summary>
+    /// denotes is this cluster is where rancher is running
+    /// </summary>
+    public bool IsControl { get; set; } = false;
 }
 
 public class ZoneStatus
 {
-    public bool IsProduction { get; set; }
+    //public bool IsProduction { get; set; }
+
+    public EnvironmentType Type { get; set; } = EnvironmentType.PreProduction;
 }

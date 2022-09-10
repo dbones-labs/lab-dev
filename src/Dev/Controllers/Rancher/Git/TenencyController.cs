@@ -1,15 +1,11 @@
 ﻿namespace Dev.Controllers.Rancher.Git;
 
-using System.Text.RegularExpressions;
 using v1.Core;
 using DotnetKubernetesClient;
-using DotnetKubernetesClient.LabelSelectors;
-using Github.Internal;
 using k8s.Models;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
-using v1.Core.Services;
 
 /// <summary>
 /// figures up the tenancies across the zones (which zone components will act on)
@@ -71,7 +67,6 @@ public class TenancyController : IResourceController<Tenancy>
 
     public async Task DeletedAsync(Tenancy? entity)
     {
-        //todo: cleanup
         if (entity == null) return;
         
         var orgs = await _kubernetesClient.List<Organization>(entity.Metadata.NamespaceProperty);
