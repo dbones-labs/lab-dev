@@ -35,8 +35,10 @@ public class RancherController : IResourceController<Rancher>
 
         var orgNs = org.Metadata.NamespaceProperty;
         var templatesBase = "Controllers/Rancher/Git/Org";
+        
+        var @default = "fleet-default";
 
-        using var gitScope = await _gitService.BeginScope("fleet", orgNs);
+        using var gitScope = await _gitService.BeginScope(@default, orgNs);
         try
         {
             gitScope.Clone();

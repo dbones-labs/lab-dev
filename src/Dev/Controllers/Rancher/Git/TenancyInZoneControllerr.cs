@@ -13,6 +13,7 @@ using Rancher.Git;
 using v1.Core;
 using v1.Platform.Rancher;
 using Cluster = Dev.v1.Components.Kubernetes.Kubernetes;
+using FleetCluster = v1.Platform.Rancher.External.Fleet.Cluster;
 
 [EntityRbac(typeof(Service), Verbs = RbacVerb.All)]
 public class ServiceInClusterController : IResourceController<Service>
@@ -37,6 +38,9 @@ public class ServiceInClusterController : IResourceController<Service>
     public async Task<ResourceControllerResult?> ReconcileAsync(Service? entity)
     {
         if (entity == null) return null;
+        
+        
+        //the concept here, is to provide the Tenancy access to the Service Namespace (and also create it if its missing)
      
         //setup project in the zone
         var tenancyName = entity.Metadata.NamespaceProperty;
@@ -47,7 +51,9 @@ public class ServiceInClusterController : IResourceController<Service>
         
         var templatesBase = "Controllers/Rancher/Git/Services";
         
-        using var gitScope = await _gitService.BeginScope("fleet", orgNs);
+        var @default = "fleet-default";
+        
+        using var gitScope = await _gitService.BeginScope(@default, orgNs);
         try
         {
             gitScope.Clone();
@@ -68,37 +74,33 @@ public class ServiceInClusterController : IResourceController<Service>
                     var content = _templating.Render(Path.Combine(templatesBase, "fleet.yaml"), new
                     {
                         Environment = zoneResource.Spec.Environment,
-                        Name = kubernetes.Name
+                        Cluster = kubernetes.Name
                     });
                     gitScope.EnsureFile($"{zoneResource.Spec.Environment}/kubernetes/{kubernetes.Name}/fleet.yaml", content);
+
+
+                    var cluster = await _kubernetesClient.Get<Cluster>(kubernetes.Name, zone.Name);
+                    var project = await _kubernetesClient.Get<Project>($@"{cluster.Metadata.Name}.{tenancyName}", zone.Name);
                     
-                    
-                    // var kubernetesResource = await _kubernetesClient.Get<>()
-                    //
-                    // content = _templating.Render(Path.Combine(templatesBase, "fleet.yaml"), new
-                    // {
-                    //     projectId = zoneResource.Spec.Environment,
-                    //     kubernetes = kubernetes.Name
-                    // });
-                    //
+                    content = _templating.Render(Path.Combine(templatesBase, "service.yaml"), new
+                    {
+                        ProjectId = project.Status.Id,
+                        KubernetesId = cluster.Status.ClusterId,
+                        Service = entity.Name(),
+                        Tenancy = entity.Namespace()
+                    });
+                    gitScope.EnsureFile($"{zoneResource.Spec.Environment}/kubernetes/{kubernetes.Name}/{entity.Name()}.yaml", content);
                 }
             }
             
-            //gitScope.Commit($"updated service - {entity.Name()}");
-            //gitScope.Push("main");
+            gitScope.Commit($"updated service - {entity.Name()}");
+            gitScope.Push("main");
         }
         catch (Exception ex)
         {
             gitScope.CleanUp();
             throw;
         }
-        
-        
-        
-        
-        //need to create a project in all clusters of the zxone
-        //var clusters = await _kubernetesClient.List<Cluster>(zoneName);
-
         
         return null;
     }
@@ -107,6 +109,42 @@ public class ServiceInClusterController : IResourceController<Service>
     {
         if (entity == null) return;
         
+        //setup project in the zone
+        var tenancyName = entity.Metadata.NamespaceProperty;
+        
+        var context = await _kubernetesClient.Get<TenancyContext>(TenancyContext.GetName(), tenancyName);
+        if (context == null) throw new Exception($"cannot find tenancy context for {tenancyName}");
+        var orgNs = context.Spec.OrganizationNamespace;
+        
+        var templatesBase = "Controllers/Rancher/Git/Services";
+        
+        var @default = "fleet-default";
+        
+        using var gitScope = await _gitService.BeginScope(@default, orgNs);
+        try
+        {
+            gitScope.Clone();
+            gitScope.Fetch();
+
+            foreach (var zone in entity.Spec.Zones)
+            {
+                var zoneResource = await _kubernetesClient.Get<Zone>(zone.Name, orgNs);
+                if (zoneResource == null) throw new Exception($"cannot find zone {zone.Name}");
+
+                foreach (var kubernetes in zone.Components.Where(x => x.Provider == "kubernetes"))
+                {
+                    gitScope.RemoveFile($"{zoneResource.Spec.Environment}/kubernetes/{kubernetes.Name}/{entity.Name()}.yaml");
+                }
+            }
+
+            gitScope.Commit($"removing service - {entity.Name()}");
+            gitScope.Push("main");
+        }
+        catch (Exception ex)
+        {
+            gitScope.CleanUp();
+            throw;
+        }
         
     }
 }
