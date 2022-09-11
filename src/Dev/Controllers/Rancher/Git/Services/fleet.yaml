@@ -1,5 +1,6 @@
 ﻿targetCustomizations:
-  - name: {{environment}}
+  - name: {{environment}}-{{cluster}}
     clusterSelector:
       matchLabels:
         lab.dev/environment: {{environment}}
+        lab.dev/name : {{cluster}}

@@ -72,9 +72,11 @@ public class TenancyController : IResourceController<Tenancy>
         var orgs = await _kubernetesClient.List<Organization>(entity.Metadata.NamespaceProperty);
         var org = orgs.FirstOrDefault();
         if (org == null) throw new Exception("please ensure you add an Organisation");
-        
         var orgNs = org.Metadata.NamespaceProperty;
-        using var gitScope = await _gitService.BeginScope("fleet", orgNs);
+        
+        var @default = "fleet-default";
+        
+        using var gitScope = await _gitService.BeginScope(@default, orgNs);
         try
         {
             gitScope.Clone();

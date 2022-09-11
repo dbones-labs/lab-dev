@@ -3,12 +3,10 @@
 using DotnetKubernetesClient;
 using DotnetKubernetesClient.LabelSelectors;
 using Github.Internal;
-using Internal;
 using k8s.Models;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
-using Octokit;
 using v1.Core;
 using v1.Core.Services;
 using v1.Core.Tenancies;
@@ -22,16 +20,13 @@ using User = v1.Platform.Github.User;
 public class FireFighterController : IResourceController<FireFighter>
 {
     private readonly IKubernetesClient _kubernetesClient;
-    private readonly GitHubClient _gitHubClient;
     private readonly ILogger<FireFighterController> _logger;
 
     public FireFighterController(        
         IKubernetesClient kubernetesClient,
-        GitHubClient gitHubClient,
         ILogger<FireFighterController> logger)
     {
         _kubernetesClient = kubernetesClient;
-        _gitHubClient = gitHubClient;
         _logger = logger;
     }
     
