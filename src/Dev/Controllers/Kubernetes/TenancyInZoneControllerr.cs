@@ -54,7 +54,9 @@ public class TenancyInZoneController : IResourceController<TenancyInZone>
                 {
                     Labels = new Dictionary<string, string>
                     {
-                        { Tenancy.TenancyLabel(), tenancyName }
+                        { Tenancy.TenancyLabel(), tenancyName },
+                        { Zone.EnvironmentLabel(), cluster.Status.Environment },
+                        { Zone.EnvironmentTypeLabel(), cluster.Status.Type.ToString() }
                     }
                 },
                 Spec = new ProjectSpec()

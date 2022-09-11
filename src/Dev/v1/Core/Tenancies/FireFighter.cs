@@ -11,6 +11,8 @@ public class FireFighter : CustomKubernetesEntity<FireFighterSpec, FireFighterSt
     public static string Requested() => "firefighter requested";
     public static string Approved() => "firefighter approved";
     public static string Activated() => "firefighter activated";
+    
+    public static string FireFighterLabel() => "lab.dev/fire-fighter";
     //public static string Completed() => "firefighter completed";
 }
 

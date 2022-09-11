@@ -5,7 +5,10 @@ using KubeOps.Operator.Entities;
 using KubeOps.Operator.Entities.Annotations;
 
 [KubernetesEntity(Group = "lab.dev", ApiVersion = "v1")]
-public class Account : CustomKubernetesEntity<AccountSpec, AccountStatus> { }
+public class Account : CustomKubernetesEntity<AccountSpec, AccountStatus>
+{
+    public static string AccountLabel() => "lab.dev/account";
+}
 
 public class AccountSpec
 {
