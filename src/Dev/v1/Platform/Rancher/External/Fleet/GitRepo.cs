@@ -18,6 +18,7 @@ public class GitRepoSpec
     public string? ServiceAccount { get; set; }
     public List<string> Paths { get; set; } = new();
     public List<ClusterSelector> Targets { get; set; } = new();
+    public string? TargetNamespace { get; set; }
 }
 
 public class ClusterSelector

@@ -138,6 +138,6 @@ public class GitScope : IDisposable
 
     public void CleanUp()
     {
-        if(Directory.Exists(_repoLocally)) Directory.Delete(_repoLocally);
+        if(Directory.Exists(_repoLocally)) Directory.Delete(_repoLocally, true);
     }
 }

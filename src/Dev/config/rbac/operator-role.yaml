@@ -5,26 +5,26 @@ metadata:
 rules:
 - apiGroups:
   - github.internal.lab.dev
-  - lab.dev
   - rancher.internal.lab.dev
+  - lab.dev
   - coordination.k8s.io
   resources:
-  - teams
-  - githubs
-  - tenancys
   - collaborators
-  - teammembers
-  - users
+  - projects
+  - ranchers
+  - tenancys
+  - firefighters
   - repositorys
+  - users
+  - githubs
+  - teams
+  - zones
+  - teammembers
+  - accounts
+  - tenancyinzones
+  - members
   - services
   - kubernetess
-  - firefighters
-  - members
-  - tenancyinzones
-  - zones
-  - projects
-  - accounts
-  - ranchers
   - leases
   verbs:
   - '*'
@@ -47,7 +47,15 @@ rules:
 - apiGroups:
   - github.internal.lab.dev
   resources:
-  - teams/status
+  - collaborators/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - rancher.internal.lab.dev
+  resources:
+  - projects/status
   verbs:
   - get
   - patch
@@ -55,7 +63,7 @@ rules:
 - apiGroups:
   - lab.dev
   resources:
-  - githubs/status
+  - ranchers/status
   verbs:
   - get
   - patch
@@ -69,9 +77,9 @@ rules:
   - patch
   - update
 - apiGroups:
-  - github.internal.lab.dev
+  - lab.dev
   resources:
-  - collaborators/status
+  - firefighters/status
   verbs:
   - get
   - patch
@@ -79,7 +87,7 @@ rules:
 - apiGroups:
   - github.internal.lab.dev
   resources:
-  - teammembers/status
+  - repositorys/status
   verbs:
   - get
   - patch
@@ -93,9 +101,57 @@ rules:
   - patch
   - update
 - apiGroups:
+  - lab.dev
+  resources:
+  - githubs/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - github.internal.lab.dev
   resources:
-  - repositorys/status
+  - teams/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - lab.dev
+  resources:
+  - zones/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - github.internal.lab.dev
+  resources:
+  - teammembers/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - lab.dev
+  resources:
+  - accounts/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - lab.dev
+  resources:
+  - tenancyinzones/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - lab.dev
+  resources:
+  - members/status
   verbs:
   - get
   - patch
@@ -112,62 +168,6 @@ rules:
   - lab.dev
   resources:
   - kubernetess/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - lab.dev
-  resources:
-  - firefighters/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - lab.dev
-  resources:
-  - members/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - lab.dev
-  resources:
-  - tenancyinzones/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - lab.dev
-  resources:
-  - zones/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - rancher.internal.lab.dev
-  resources:
-  - projects/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - lab.dev
-  resources:
-  - accounts/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - lab.dev
-  resources:
-  - ranchers/status
   verbs:
   - get
   - patch

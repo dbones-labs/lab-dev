@@ -31,13 +31,37 @@
       <None Update="Controllers\Rancher\Git\Org\service-roles.yaml">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
-      <None Update="Controllers\Rancher\Git\Tenancies\tenancy.yaml">
+      <None Update="Controllers\Rancher\Git\TenancyDefaults\Files\cd.md">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
-      <None Update="Controllers\Rancher\Git\Services\fleet.yaml">
+      <None Update="Controllers\Rancher\Git\TenancyDefaults\Files\libraries.md">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
-      <None Update="Controllers\Rancher\Git\Services\service.yaml">
+      <None Update="Controllers\Rancher\Git\TenancyDefaults\Files\members.md">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="Controllers\Rancher\Git\TenancyDefaults\Files\services.md">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="Controllers\Rancher\Git\ZoneDefaults\Files\clusters.md">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="Controllers\Rancher\Git\ZoneDefaults\Files\cd.md">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="Controllers\Rancher\Git\BackendFleet\Tenancies\tenancy.yaml">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="Controllers\Rancher\Git\BackendFleet\Services\service.yaml">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="Controllers\Rancher\Git\BackendFleet\Services\fleet.yaml">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="Controllers\Rancher\Git\BackendFleet\Org\service-roles.yaml">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="Controllers\Rancher\Git\BackendFleet\Org\org-roles.yaml">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
     </ItemGroup>

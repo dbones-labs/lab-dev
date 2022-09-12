@@ -10,6 +10,7 @@ using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
 using v1.Core.Services;
+using v1.Platform.Rancher.External.Fleet;
 
 /// <summary>
 /// figures up the tenancies across the zones (which zone components will act on)
@@ -117,10 +118,54 @@ public class TenancyController : IResourceController<Tenancy>
             await _kubernetesClient.Delete(removalCandidate);
         }
 
-        //setup create the service role for the tenancies fleet
+        //setup create the service role for the tenancies fleet (this is in the GIT sub folder)
         
+        var github = await _kubernetesClient.GetGithub(entity.Metadata.NamespaceProperty);
         //setup the fleet for the one tenancy.
+        var local = "fleet-local";
+        var @default = "fleet-default";
+        var githubToken = "github-token";
+        var repo = $"https://github.com/{github.Spec.Organisation}/{entity.Name()}.git";
 
+        await _kubernetesClient.Ensure(() => new GitRepo
+        {
+            Spec = new GitRepoSpec()
+            {
+                Branch = "main",
+                Repo = repo,
+                ClientSecretName = githubToken,
+                Paths = new List<string>() { "members", "services", "libraries" },
+                TargetNamespace = entity.Name(),
+                Targets = new List<ClusterSelector>()
+                {
+                    new ClusterSelector()
+                    {
+                        ClusterGroup = "control"
+                    }
+                }
+            }
+        }, entity.Name(), local);
+        
+        await _kubernetesClient.Ensure(() => new GitRepo
+        {
+            Spec = new GitRepoSpec()
+            {
+                Branch = "main",
+                Repo = repo,
+                ClientSecretName = githubToken,
+                Paths = new List<string>() { "cd" },
+                ServiceAccount = entity.Name(),
+                //TargetNamespace = entity.Name(),
+                Targets = new List<ClusterSelector>()
+                {
+                    new ClusterSelector()
+                    {
+                        ClusterGroup = "delivery"
+                    }
+                }
+            }
+        }, entity.Name(), @default);
+        
         return null;
     }
 
@@ -141,5 +186,11 @@ public class TenancyController : IResourceController<Tenancy>
                 new EqualsSelector(Tenancy.TenancyLabel(), @namespace));
         
         await _kubernetesClient.Delete(zones);
+        
+        var local = "fleet-local";
+        var @default = "fleet-default";       
+        
+        await _kubernetesClient.Delete<GitRepo>(entity.Name(), local);
+        await _kubernetesClient.Delete<GitRepo>(entity.Name(), @default);
     }
 }
