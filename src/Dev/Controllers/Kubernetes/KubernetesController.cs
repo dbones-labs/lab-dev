@@ -30,7 +30,7 @@ public class KubernetesController : IResourceController<Cluster>
     {
         if (entity == null) return null;
 
-        var fleetNamespace = "fleet-default";
+        var fleetNamespace = entity.Name() == "local" ? "fleet-local" : "fleet-default";
         var clusterName = entity.Metadata.Name;
         var zoneName = entity.Metadata.NamespaceProperty;
 

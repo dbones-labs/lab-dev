@@ -1,0 +1,1394 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    operator: dev
+  name: dev-system
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  labels:
+    operator: dev
+    operator-element: crd
+  name: accounts.lab.dev
+spec:
+  group: lab.dev
+  names:
+    kind: Account
+    listKind: AccountList
+    plural: accounts
+    singular: account
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            description: Specification of the kubernetes object.
+            properties:
+              externalAccounts:
+                items:
+                  properties:
+                    id:
+                      description: the account id of the external system
+                      type: string
+                    provider:
+                      description: |-
+                        the provider which the account is to be associated with
+                        github, discord, rancher etc
+                      type: string
+                  required:
+                  - provider
+                  - id
+                  type: object
+                type: array
+            type: object
+          status:
+            description: Status object for the entity.
+            properties:
+              rancherId:
+                nullable: true
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  labels:
+    operator: dev
+    operator-element: crd
+  name: collaborators.github.internal.lab.dev
+spec:
+  group: github.internal.lab.dev
+  names:
+    kind: Collaborator
+    listKind: CollaboratorList
+    plural: collaborators
+    singular: collaborator
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            description: Specification of the kubernetes object.
+            properties:
+              membership:
+                enum:
+                - Pull
+                - Push
+                - Admin
+                type: string
+              organizationNamespace:
+                type: string
+              repository:
+                type: string
+              team:
+                type: string
+            required:
+            - team
+            - repository
+            - organizationNamespace
+            type: object
+          status:
+            description: Status object for the entity.
+            properties: {}
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  labels:
+    operator: dev
+    operator-element: crd
+  name: discords.lab.dev
+spec:
+  group: lab.dev
+  names:
+    kind: Discord
+    listKind: DiscordList
+    plural: discords
+    singular: discord
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            description: Specification of the kubernetes object.
+            properties:
+              credentials:
+                type: string
+              guild:
+                format: int64
+                type: integer
+            required:
+            - credentials
+            type: object
+          status:
+            description: Status object for the entity.
+            properties: {}
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  labels:
+    operator: dev
+    operator-element: crd
+  name: environments.lab.dev
+spec:
+  group: lab.dev
+  names:
+    kind: Environment
+    listKind: EnvironmentList
+    plural: environments
+    singular: environment
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - description: the type of environment this is
+      jsonPath: .spec.type
+      name: Type
+      priority: 0
+      type: string
+    name: v1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            description: Specification of the kubernetes object.
+            properties:
+              type:
+                description: the type of environment this is
+                enum:
+                - Production
+                - PreProduction
+                - Engineering
+                type: string
+            required:
+            - type
+            type: object
+          status:
+            description: Status object for the entity.
+            properties: {}
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  labels:
+    operator: dev
+    operator-element: crd
+  name: firefighters.lab.dev
+spec:
+  group: lab.dev
+  names:
+    kind: FireFighter
+    listKind: FireFighterList
+    plural: firefighters
+    singular: firefighter
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.tenancy
+      name: Tenancy
+      priority: 0
+      type: string
+    - format: date-time
+      jsonPath: .spec.finish
+      name: Finish
+      priority: 0
+      type: string
+    name: v1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            description: Specification of the kubernetes object.
+            properties:
+              account:
+                type: string
+              finish:
+                format: date-time
+                type: string
+              number:
+                format: int32
+                type: integer
+              repositoryId:
+                format: int64
+                type: integer
+              start:
+                format: date-time
+                type: string
+              tenancy:
+                type: string
+            required:
+            - account
+            - tenancy
+            - start
+            - finish
+            type: object
+          status:
+            description: Status object for the entity.
+            properties:
+              state:
+                enum:
+                - Requested
+                - Approved
+                - Activated
+                - Completed
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  labels:
+    operator: dev
+    operator-element: crd
+  name: githubs.lab.dev
+spec:
+  group: lab.dev
+  names:
+    kind: Github
+    listKind: GithubList
+    plural: githubs
+    singular: github
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - description: the github organisation
+      jsonPath: .spec.organisation
+      name: Organisation
+      priority: 0
+      type: string
+    - description: |-
+        the global team which everyone will be part of, this is so
+        everyone can get access to private repo's
+      jsonPath: .spec.globalTeam
+      name: GlobalTeam
+      priority: 0
+      type: string
+    name: v1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            description: Specification of the kubernetes object.
+            properties:
+              archive:
+                description: 'when services are deleted should the code be archived
+                  (Default: true)'
+                type: boolean
+              archiveTeam:
+                description: |-
+                  the team which is used to admin archived projects
+                  (to make github as clean as it can be for others)
+                type: string
+              cleanUp:
+                description: |-
+                  remove all managed items when deleted.
+                  (remove teams, repos, including archived)
+                type: boolean
+              credentials:
+                description: API key to call the Github API with
+                type: string
+              globalTeam:
+                description: |-
+                  the global team which everyone will be part of, this is so
+                  everyone can get access to private repo's
+                type: string
+              organisation:
+                description: the github organisation
+                type: string
+              technicalUser:
+                description: the technical user which will be used to modify github
+                  with
+                type: string
+              visibility:
+                description: 'the default visibility of all repositories (Default:
+                  private)'
+                enum:
+                - Public
+                - Internal
+                - Private
+                type: string
+            required:
+            - organisation
+            - credentials
+            - technicalUser
+            type: object
+          status:
+            description: Status object for the entity.
+            properties:
+              credentialsReference:
+                nullable: true
+                properties:
+                  name:
+                    type: string
+                  namespaceProperty:
+                    type: string
+                type: object
+              id:
+                format: int32
+                nullable: true
+                type: integer
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  labels:
+    operator: dev
+    operator-element: crd
+  name: kubernetess.lab.dev
+spec:
+  group: lab.dev
+  names:
+    kind: Kubernetes
+    listKind: KubernetesList
+    plural: kubernetess
+    singular: kubernetes
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            description: Specification of the kubernetes object.
+            properties:
+              isPrimary:
+                type: boolean
+            type: object
+          status:
+            description: Status object for the entity.
+            properties:
+              cloud:
+                type: string
+              clusterId:
+                type: string
+              environment:
+                type: string
+              isControl:
+                type: boolean
+              region:
+                type: string
+              type:
+                enum:
+                - Production
+                - PreProduction
+                - Engineering
+                type: string
+              zone:
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  labels:
+    operator: dev
+    operator-element: crd
+  name: members.lab.dev
+spec:
+  group: lab.dev
+  names:
+    kind: Member
+    listKind: MemberList
+    plural: members
+    singular: member
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.role
+      name: Role
+      priority: 0
+      type: string
+    name: v1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            description: Specification of the kubernetes object.
+            properties:
+              account:
+                type: string
+              role:
+                enum:
+                - Owner
+                - Member
+                - Guest
+                type: string
+            required:
+            - account
+            type: object
+          status:
+            description: Status object for the entity.
+            properties: {}
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  labels:
+    operator: dev
+    operator-element: crd
+  name: organizations.lab.dev
+spec:
+  group: lab.dev
+  names:
+    kind: Organization
+    listKind: OrganizationList
+    plural: organizations
+    singular: organization
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            description: Specification of the kubernetes object.
+            properties:
+              engineering:
+                nullable: true
+                type: string
+              productionAccessWorkFlow:
+                type: boolean
+              retainFor:
+                description: |-
+                  how long to retain the service, when it have been deleted
+                  this allows for a service to be transferred between tenancies (default 1 week)
+                format: int32
+                type: integer
+            type: object
+          status:
+            description: Status object for the entity.
+            properties: {}
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  labels:
+    operator: dev
+    operator-element: crd
+  name: packages.lab.dev
+spec:
+  group: lab.dev
+  names:
+    kind: Package
+    listKind: PackageList
+    plural: packages
+    singular: package
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.visibility
+      name: Visibility
+      priority: 0
+      type: string
+    name: v1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            description: Specification of the kubernetes object.
+            properties:
+              visibility:
+                enum:
+                - Public
+                - Internal
+                - Private
+                type: string
+            type: object
+          status:
+            description: Status object for the entity.
+            properties: {}
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  labels:
+    operator: dev
+    operator-element: crd
+  name: postgress.lab.dev
+spec:
+  group: lab.dev
+  names:
+    kind: Postgres
+    listKind: PostgresList
+    plural: postgress
+    singular: postgres
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            description: Specification of the kubernetes object.
+            properties:
+              credentials:
+                type: string
+              useSshTunnel:
+                type: boolean
+            type: object
+          status:
+            description: Status object for the entity.
+            properties: {}
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  labels:
+    operator: dev
+    operator-element: crd
+  name: projects.rancher.internal.lab.dev
+spec:
+  group: rancher.internal.lab.dev
+  names:
+    kind: Project
+    listKind: ProjectList
+    plural: projects
+    singular: project
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            description: Specification of the kubernetes object.
+            properties:
+              kubernetes:
+                description: the cluster this belongs too
+                type: string
+              tenancy:
+                description: the name of the tenancy (not the name of this resource)
+                type: string
+            required:
+            - tenancy
+            - kubernetes
+            type: object
+          status:
+            description: Status object for the entity.
+            properties:
+              id:
+                description: the rancher project id (as it get generated, and placed
+                  into another namespace)
+                nullable: true
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  labels:
+    operator: dev
+    operator-element: crd
+  name: ranchers.lab.dev
+spec:
+  group: lab.dev
+  names:
+    kind: Rancher
+    listKind: RancherList
+    plural: ranchers
+    singular: rancher
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            description: Specification of the kubernetes object.
+            properties:
+              platformMemberRole:
+                type: string
+              platformProductionMemberRole:
+                type: string
+              technicalUser:
+                description: |-
+                  this user will be assigned as the owner in a number of cases.
+                  should be a GOD user.
+                type: string
+              tenancyFireFighterMemberRole:
+                type: string
+              tenancyGuestRole:
+                type: string
+              tenancyMemberRole:
+                type: string
+              tenancyProductionMemberRole:
+                type: string
+            type: object
+          status:
+            description: Status object for the entity.
+            properties: {}
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  labels:
+    operator: dev
+    operator-element: crd
+  name: repositorys.github.internal.lab.dev
+spec:
+  group: github.internal.lab.dev
+  names:
+    kind: Repository
+    listKind: RepositoryList
+    plural: repositorys
+    singular: repository
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            description: Specification of the kubernetes object.
+            properties:
+              enforceCollaborators:
+                description: |-
+                  ensure only the managed collaborators are provided access.
+                  [default: false]
+                type: boolean
+              organizationNamespace:
+                type: string
+              state:
+                description: is the repository is active or archived
+                enum:
+                - Archived
+                - Active
+                type: string
+              type:
+                description: |-
+                  the repo can be for projects/service (normal) or to adminsitrate/control (system)
+                  [default: Normal]
+                enum:
+                - System
+                - Normal
+                type: string
+              visibility:
+                description: control who can see the repository
+                enum:
+                - Public
+                - Internal
+                - Private
+                type: string
+            required:
+            - organizationNamespace
+            type: object
+          status:
+            description: Status object for the entity.
+            properties:
+              id:
+                format: int64
+                nullable: true
+                type: integer
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  labels:
+    operator: dev
+    operator-element: crd
+  name: services.lab.dev
+spec:
+  group: lab.dev
+  names:
+    kind: Service
+    listKind: ServiceList
+    plural: services
+    singular: service
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.visibility
+      name: Visibility
+      priority: 0
+      type: string
+    name: v1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            description: Specification of the kubernetes object.
+            properties:
+              visibility:
+                enum:
+                - Public
+                - Internal
+                - Private
+                type: string
+              zones:
+                items:
+                  properties:
+                    components:
+                      items:
+                        properties:
+                          name:
+                            type: string
+                          provider:
+                            type: string
+                        required:
+                        - name
+                        - provider
+                        type: object
+                      type: array
+                    name:
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
+            type: object
+          status:
+            description: Status object for the entity.
+            properties: {}
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  labels:
+    operator: dev
+    operator-element: crd
+  name: teammembers.github.internal.lab.dev
+spec:
+  group: github.internal.lab.dev
+  names:
+    kind: TeamMember
+    listKind: TeamMemberList
+    plural: teammembers
+    singular: teammember
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            description: Specification of the kubernetes object.
+            properties:
+              login:
+                type: string
+              team:
+                type: string
+            required:
+            - login
+            - team
+            type: object
+          status:
+            description: Status object for the entity.
+            properties: {}
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  labels:
+    operator: dev
+    operator-element: crd
+  name: teams.github.internal.lab.dev
+spec:
+  group: github.internal.lab.dev
+  names:
+    kind: Team
+    listKind: TeamList
+    plural: teams
+    singular: team
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            description: Specification of the kubernetes object.
+            properties:
+              description:
+                type: string
+              type:
+                description: what is the context of the team, system teams are around
+                  automations and control
+                enum:
+                - System
+                - Normal
+                type: string
+              visibility:
+                description: who should be able to see the team (some teams you may
+                  not want to be viewable)
+                enum:
+                - Public
+                - Internal
+                - Private
+                type: string
+            type: object
+          status:
+            description: Status object for the entity.
+            properties:
+              id:
+                format: int32
+                nullable: true
+                type: integer
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  labels:
+    operator: dev
+    operator-element: crd
+  name: tenancycontexts.lab.dev
+spec:
+  group: lab.dev
+  names:
+    kind: TenancyContext
+    listKind: TenancyContextList
+    plural: tenancycontexts
+    singular: tenancycontext
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            description: Specification of the kubernetes object.
+            properties:
+              organizationNamespace:
+                type: string
+            required:
+            - organizationNamespace
+            type: object
+          status:
+            description: Status object for the entity.
+            properties: {}
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  labels:
+    operator: dev
+    operator-element: crd
+  name: tenancyinzones.lab.dev
+spec:
+  group: lab.dev
+  names:
+    kind: TenancyInZone
+    listKind: TenancyInZoneList
+    plural: tenancyinzones
+    singular: tenancyinzone
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            description: Specification of the kubernetes object.
+            properties:
+              tenancy:
+                type: string
+            required:
+            - tenancy
+            type: object
+          status:
+            description: Status object for the entity.
+            properties: {}
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  labels:
+    operator: dev
+    operator-element: crd
+  name: tenancys.lab.dev
+spec:
+  group: lab.dev
+  names:
+    kind: Tenancy
+    listKind: TenancyList
+    plural: tenancys
+    singular: tenancy
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - description: this indicates that the team is a platform team
+      jsonPath: .spec.isPlatform
+      name: IsPlatform
+      priority: 0
+      type: boolean
+    name: v1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            description: Specification of the kubernetes object.
+            properties:
+              isPlatform:
+                description: this indicates that the team is a platform team
+                type: boolean
+              zoneFilter:
+                description: this will be used to select which zones a tenancy has
+                  access to
+                items:
+                  properties:
+                    key:
+                      type: string
+                    operator:
+                      enum:
+                      - Pattern
+                      - StartsWith
+                      - Equals
+                      - NotEquals
+                      type: string
+                    value:
+                      type: string
+                  required:
+                  - key
+                  - operator
+                  - value
+                  type: object
+                type: array
+            type: object
+          status:
+            description: Status object for the entity.
+            properties: {}
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  labels:
+    operator: dev
+    operator-element: crd
+  name: users.github.internal.lab.dev
+spec:
+  group: github.internal.lab.dev
+  names:
+    kind: User
+    listKind: UserList
+    plural: users
+    singular: user
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            description: Specification of the kubernetes object.
+            properties:
+              login:
+                description: the github username
+                type: string
+            required:
+            - login
+            type: object
+          status:
+            description: Status object for the entity.
+            properties:
+              githubId:
+                nullable: true
+                type: string
+              organisationStatus:
+                enum:
+                - NotAMember
+                - Invited
+                - Member
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  labels:
+    operator: dev
+    operator-element: crd
+  name: zones.lab.dev
+spec:
+  group: lab.dev
+  names:
+    kind: Zone
+    listKind: ZoneList
+    plural: zones
+    singular: zone
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - description: the name of the environment this belongs to
+      jsonPath: .spec.environment
+      name: Environment
+      priority: 0
+      type: string
+    - description: aws, azure, on-prem, scaleway, etc
+      jsonPath: .spec.cloud
+      name: Cloud
+      priority: 0
+      type: string
+    - description: where this zone is located
+      jsonPath: .spec.region
+      name: Region
+      priority: 0
+      type: string
+    name: v1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            description: Specification of the kubernetes object.
+            properties:
+              cloud:
+                description: aws, azure, on-prem, scaleway, etc
+                type: string
+              environment:
+                description: the name of the environment this belongs to
+                type: string
+              isControl:
+                description: denotes is this cluster is where rancher is running
+                type: boolean
+              region:
+                description: where this zone is located
+                type: string
+            required:
+            - environment
+            - cloud
+            - region
+            type: object
+          status:
+            description: Status object for the entity.
+            properties:
+              type:
+                enum:
+                - Production
+                - PreProduction
+                - Engineering
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    operator: dev
+    operator-element: rbac
+  name: dev-operator-role
+rules:
+- apiGroups:
+  - github.internal.lab.dev
+  - lab.dev
+  - rancher.internal.lab.dev
+  - coordination.k8s.io
+  resources:
+  - teams
+  - githubs
+  - tenancys
+  - collaborators
+  - teammembers
+  - users
+  - repositorys
+  - services
+  - kubernetess
+  - firefighters
+  - members
+  - tenancyinzones
+  - zones
+  - projects
+  - accounts
+  - ranchers
+  - leases
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - get
+  - list
+  - update
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - get
+  - list
+- apiGroups:
+  - github.internal.lab.dev
+  resources:
+  - teams/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - lab.dev
+  resources:
+  - githubs/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - lab.dev
+  resources:
+  - tenancys/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - github.internal.lab.dev
+  resources:
+  - collaborators/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - github.internal.lab.dev
+  resources:
+  - teammembers/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - github.internal.lab.dev
+  resources:
+  - users/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - github.internal.lab.dev
+  resources:
+  - repositorys/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - lab.dev
+  resources:
+  - services/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - lab.dev
+  resources:
+  - kubernetess/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - lab.dev
+  resources:
+  - firefighters/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - lab.dev
+  resources:
+  - members/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - lab.dev
+  resources:
+  - tenancyinzones/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - lab.dev
+  resources:
+  - zones/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - rancher.internal.lab.dev
+  resources:
+  - projects/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - lab.dev
+  resources:
+  - accounts/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - lab.dev
+  resources:
+  - ranchers/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - apps
+  resources:
+  - deployments/status
+  verbs:
+  - get
+  - patch
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    operator: dev
+    operator-element: rbac
+  name: dev-operator-role-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: dev-operator-role
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: dev-system

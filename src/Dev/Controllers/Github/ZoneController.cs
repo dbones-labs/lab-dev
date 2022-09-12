@@ -36,6 +36,8 @@ public class ZoneController : IResourceController<Zone>
         var ns = await _kubernetesClient.Get<V1Namespace>(zoneName);
         if (ns == null) throw new Exception($"cannot find zone namespace {zoneName}");
 
+        var github = await _kubernetesClient.GetGithub(organisation);
+        
         try
         {
             await _kubernetesClient.Ensure(() => new Repository()
@@ -61,7 +63,10 @@ public class ZoneController : IResourceController<Zone>
             new EqualsSelector(Team.PlatformLabel(), "True"));
         
         var collabs = await _kubernetesClient.List<Collaborator>(zoneName);
-        var toRemove = collabs.ToDictionary(x => x.Spec.Team);
+        var toRemove = collabs
+            .Where(x => x.Spec.Team != github.Spec.GlobalTeam)
+            .Where(x => x.Spec.Team != github.Spec.ArchiveTeam)
+            .ToDictionary(x => x.Spec.Team);
 
         foreach (var platformTeam in platformTeams)
         {

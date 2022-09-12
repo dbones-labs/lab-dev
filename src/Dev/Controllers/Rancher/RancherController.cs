@@ -19,7 +19,7 @@ public class RancherController : IResourceController<Rancher>
     private readonly IKubernetesClient _kubernetesClient;
     private readonly ILogger<RancherController> _logger;
 
-    public RancherController( 
+    public RancherController(
         IKubernetesClient kubernetesClient,
         ILogger<RancherController> logger)
     {
@@ -37,7 +37,7 @@ public class RancherController : IResourceController<Rancher>
         if (org == null) throw new Exception("please ensure you add an Organisation");
 
         var orgNs = org.Metadata.NamespaceProperty;
-        
+
         var gitRepoBase = "https://github.com/{0}/{1}.git";
 
         var local = "fleet-local";
@@ -51,11 +51,28 @@ public class RancherController : IResourceController<Rancher>
         var localGitRepo = string.Format(gitRepoBase, github.Spec.Organisation, local);
         var defaultGitRepo = string.Format(gitRepoBase, github.Spec.Organisation, @default);
         var orgGitRepo = string.Format(gitRepoBase, github.Spec.Organisation, github.Metadata.NamespaceProperty);
-        
 
-        
-        
+
         //setup the gitops for the control/local cluster
+        await _kubernetesClient.Ensure(() => new ClusterGroup()
+        {
+            Spec = new ClusterGroupSpec
+            {
+                Selector = new GroupSelector()
+                {
+                    MatchExpressions = new List<MatchSelector>()
+                    {
+                        new MatchSelector()
+                        {
+                            Key = "provider.cattle.io",
+                            Operator = "NotIn",
+                            Values = new List<string>() { "harvester" }
+                        }
+                    }
+                }
+            }
+        }, "control", local);
+
         await _kubernetesClient.Ensure(() => new Repository()
         {
             Spec = new()
@@ -67,16 +84,17 @@ public class RancherController : IResourceController<Rancher>
                 OrganizationNamespace = orgNs
             }
         }, local, orgNs);
-        
+
         await _kubernetesClient.Ensure(() => new V1Secret
         {
+            Type = "kubernetes.io/basic-auth",
             StringData = new Dictionary<string, string>()
             {
-                { "Username", github.Spec.TechnicalUser },
-                { "Password", token }
+                { "username", github.Spec.TechnicalUser },
+                { "password", token }
             }
         }, githubToken, local);
-        
+
         //the main "org" repo
         await _kubernetesClient.Ensure(() => new GitRepo
         {
@@ -85,14 +103,19 @@ public class RancherController : IResourceController<Rancher>
                 Branch = "main",
                 Repo = localGitRepo,
                 ClientSecretName = githubToken,
+                Targets = new List<ClusterSelector>()
+                {
+                    new ClusterSelector()
+                    {
+                        ClusterGroup = "control"
+                    }
+                }
             }
         }, local, local);
-        
-        
-        
-        
+
+
         //setup the groups (to help with downstream deployments)
-        await _kubernetesClient.Ensure(()=> new ClusterGroup()
+        await _kubernetesClient.Ensure(() => new ClusterGroup()
         {
             Spec = new ClusterGroupSpec
             {
@@ -110,8 +133,8 @@ public class RancherController : IResourceController<Rancher>
                 }
             }
         }, "delivery", @default);
-        
-        await _kubernetesClient.Ensure(()=> new ClusterGroup()
+
+        await _kubernetesClient.Ensure(() => new ClusterGroup()
         {
             Spec = new ClusterGroupSpec
             {
@@ -129,10 +152,8 @@ public class RancherController : IResourceController<Rancher>
                 }
             }
         }, "engineering", @default);
-        
-        
-        
-        
+
+
         //needed to store the the gitops for handling access for downstream repo's
         await _kubernetesClient.Ensure(() => new Repository()
         {
@@ -145,16 +166,17 @@ public class RancherController : IResourceController<Rancher>
                 OrganizationNamespace = orgNs
             }
         }, @default, orgNs);
-        
+
         await _kubernetesClient.Ensure(() => new V1Secret
         {
+            Type = "kubernetes.io/basic-auth",
             StringData = new Dictionary<string, string>()
             {
-                { "Username", github.Spec.TechnicalUser },
-                { "Password", token }
+                { "username", github.Spec.TechnicalUser },
+                { "password", token }
             }
         }, githubToken, @default);
-        
+
         await _kubernetesClient.Ensure(() => new GitRepo
         {
             Spec = new GitRepoSpec()
@@ -171,10 +193,8 @@ public class RancherController : IResourceController<Rancher>
                 }
             }
         }, @default, @default);
-        
-        
-        
-        
+
+
         //register the Control Env (local rancher cluster)
         await _kubernetesClient.Ensure(() => new Environment()
         {
@@ -183,7 +203,7 @@ public class RancherController : IResourceController<Rancher>
                 Type = EnvironmentType.Production
             }
         }, "control", orgNs);
-        
+
         await _kubernetesClient.Ensure(() => new Zone()
         {
             Spec = new ZoneSpec
@@ -194,15 +214,14 @@ public class RancherController : IResourceController<Rancher>
                 IsControl = true
             }
         }, "control", orgNs);
-        
-        await _kubernetesClient.Ensure(()=> new Kubernetes()
+
+        await _kubernetesClient.Ensure(() => new Kubernetes()
         {
             Spec = new KubernetesSpec()
             {
                 IsPrimary = true
             }
         }, "local", "control");
-        
         
         await _kubernetesClient.Ensure(() => new GitRepo
         {
@@ -215,21 +234,13 @@ public class RancherController : IResourceController<Rancher>
                 {
                     new ClusterSelector()
                     {
-                        MatchExpressions = new List<MatchSelector>()
-                        {
-                            new MatchSelector()
-                            {
-                                Key = "provider.cattle.io",
-                                Operator = "NotIn",
-                                Values = new List<string>() { "harvester" }
-                            }
-                        }
+                        ClusterGroup = "control"
                     }
                 }
             }
         }, github.Metadata.NamespaceProperty, local);
-        
-        
+
+
         //Engineering defaults
         await _kubernetesClient.Ensure(() => new Environment()
         {
@@ -238,7 +249,7 @@ public class RancherController : IResourceController<Rancher>
                 Type = EnvironmentType.Engineering
             }
         }, org.Spec.Engineering, orgNs);
-        
+
         await _kubernetesClient.Ensure(() => new Repository()
         {
             Spec = new()
@@ -267,9 +278,7 @@ public class RancherController : IResourceController<Rancher>
                 }
             }
         }, "engineering", @default);
-        
+
         return null;
     }
 }
-
-

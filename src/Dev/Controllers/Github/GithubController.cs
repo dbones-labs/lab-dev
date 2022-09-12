@@ -84,8 +84,8 @@ public class GithubController : IResourceController<Github>
             return;
         }
 
-        var orgNs = entity.Metadata.NamespaceProperty;
-        await _kubernetesClient.Delete<Repository>(entity.Spec.GlobalTeam, orgNs);
-        await _kubernetesClient.Delete<Repository>(entity.Spec.ArchiveTeam, orgNs);
+        //var orgNs = entity.Metadata.NamespaceProperty;
+        //await _kubernetesClient.Delete<Repository>(entity.Spec.GlobalTeam, orgNs);
+        //await _kubernetesClient.Delete<Repository>(entity.Spec.ArchiveTeam, orgNs);
     }
 }

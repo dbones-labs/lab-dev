@@ -42,7 +42,9 @@ public class TenancyController : IResourceController<Tenancy>
         var orgNs = org.Metadata.NamespaceProperty;
         var templatesBase = "Controllers/Rancher/Git/Tenancies";
         
-        using var gitScope = await _gitService.BeginScope("fleet", orgNs);
+        var @default = "fleet-default";
+        
+        using var gitScope = await _gitService.BeginScope(@default, orgNs);
         try
         {
             gitScope.Clone();
