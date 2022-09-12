@@ -122,7 +122,7 @@ possible setup
 ---
 
 apiVersion: lab.dev/v1
-kind: Organisation
+kind: Organization
 metadata:
   name: dbones-labs
   namespace: lab # sets the org namespace
@@ -181,7 +181,7 @@ metadata:
   labels:
     lab.dev/verison: 1
 spec:
-  technicalUser: user-krjz4
+  technicalUser: user-kg5zd
 
 ---
 
