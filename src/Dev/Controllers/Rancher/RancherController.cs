@@ -35,7 +35,6 @@ public class RancherController : IResourceController<Rancher>
         var orgs = await _kubernetesClient.List<Organization>(entity.Metadata.NamespaceProperty);
         var org = orgs.FirstOrDefault();
         if (org == null) throw new Exception("please ensure you add an Organisation");
-
         var orgNs = org.Metadata.NamespaceProperty;
 
         var gitRepoBase = "https://github.com/{0}/{1}.git";

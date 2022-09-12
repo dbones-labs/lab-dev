@@ -1,6 +1,7 @@
-﻿namespace Dev.Controllers.Rancher.Git;
+﻿namespace Dev.Controllers.Rancher.Git.TenancyDefaults;
 
-using v1.Core;
+using Dev.Controllers.Rancher.Git;
+using Dev.v1.Core;
 using DotnetKubernetesClient;
 using k8s.Models;
 using KubeOps.Operator.Controller;
@@ -40,60 +41,38 @@ public class TenancyController : IResourceController<Tenancy>
         if (org == null) throw new Exception("please ensure you add an Organisation");
         
         var orgNs = org.Metadata.NamespaceProperty;
-        var templatesBase = "Controllers/Rancher/Git/Tenancies";
+        var templatesBase = "Controllers/Rancher/Git/TenancyDefaults/Files";
         
-        var @default = "fleet-default";
         
-        using var gitScope = await _gitService.BeginScope(@default, orgNs);
+        using var gitScope = await _gitService.BeginScope(entity.Name(), orgNs);
         try
         {
             gitScope.Clone();
             gitScope.Fetch();
             
-            //attach the tenancy so it can deploy to a tenancy (this only happens once per cluster)
-            var content = _templating.Render(Path.Combine(templatesBase, "tenancy.yaml"), new { Name = entity.Name() });
-            gitScope.EnsureFile($"tenancies/{entity.Name()}.yaml", content);
+            //setup the default files to enforce structure
+            var content = _templating.Render(Path.Combine(templatesBase, "members.md"), new { Namespace = entity.Name() });
+            gitScope.EnsureFile($"members/members.md", content);
+            
+            content = _templating.Render(Path.Combine(templatesBase, "services.md"), new { Namespace = entity.Name() });
+            gitScope.EnsureFile($"services/services.md", content);
+            
+            content = _templating.Render(Path.Combine(templatesBase, "libraries.md"), new { Namespace = entity.Name() });
+            gitScope.EnsureFile($"libraries/libraries.md", content);
+            
+            content = _templating.Render(Path.Combine(templatesBase, "cd.md"));
+            gitScope.EnsureFile($"cd/cd.md", content);
 
             gitScope.Commit($"updated tenancy - {entity.Name()}");
             gitScope.Push("main");
         }
         catch (Exception ex)
         {
+            if (ex.Message.Contains("git scope is")) return null; //refactor
             gitScope.CleanUp();
             throw;
         }
         
         return null;
-    }
-
-
-    public async Task DeletedAsync(Tenancy? entity)
-    {
-        if (entity == null) return;
-        
-        var orgs = await _kubernetesClient.List<Organization>(entity.Metadata.NamespaceProperty);
-        var org = orgs.FirstOrDefault();
-        if (org == null) throw new Exception("please ensure you add an Organisation");
-        var orgNs = org.Metadata.NamespaceProperty;
-        
-        var @default = "fleet-default";
-        
-        using var gitScope = await _gitService.BeginScope(@default, orgNs);
-        try
-        {
-            gitScope.Clone();
-            gitScope.Fetch();
-            
-            //attach the tenancy so it can deploy to a tenancy (this only happens once per cluster)
-            gitScope.RemoveFile($"./tenancies/{entity.Name()}.yaml");
-
-            gitScope.Commit($"removed tenancy - {entity.Name()}");
-            gitScope.Push("main");
-        }
-        catch (Exception)
-        {
-            gitScope.CleanUp();
-            throw;
-        }
     }
 }

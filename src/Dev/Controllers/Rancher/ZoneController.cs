@@ -8,7 +8,7 @@ using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
 using v1.Core;
 using v1.Core.Services;
-
+using v1.Platform.Rancher.External.Fleet;
 
 /// <summary>
 /// sets up the zone area, which will be acted upon by zone level components (kubernetes, postgres, rabbit etc)
@@ -52,6 +52,58 @@ public class ZoneController : IResourceController<Zone>
             }
         }, TenancyContext.GetName(), entity.Metadata.Name);
 
+        if (entity.Name() == "control")
+        {
+            return null;
+        }
+
+        var github = await _kubernetesClient.GetGithub(entity.Metadata.NamespaceProperty);
+        
+        
+        //sync the repo with control and any downstream cluster
+        var local = "fleet-local";
+        var @default = "fleet-default";
+        var githubToken = "github-token";
+        var repo = $"https://github.com/{github.Spec.Organisation}/{entity.Name()}.git";
+        
+        await _kubernetesClient.Ensure(() => new GitRepo
+        {
+            Spec = new GitRepoSpec()
+            {
+                Branch = "main",
+                Repo = repo,
+                ClientSecretName = githubToken,
+                Paths = new List<string>() {"clusters"},
+                TargetNamespace = entity.Name(),
+                Targets = new List<ClusterSelector>()
+                {
+                    new ClusterSelector()
+                    {
+                        ClusterGroup = "control"
+                    }
+                }
+            }
+        }, entity.Name(), local);
+        
+        await _kubernetesClient.Ensure(() => new GitRepo
+        {
+            Spec = new GitRepoSpec()
+            {
+                Branch = "main",
+                Repo = repo,
+                ClientSecretName = githubToken,
+                Paths = new List<string>() { "cd" },
+                //TargetNamespace = entity.Name(),
+                Targets = new List<ClusterSelector>()
+                {
+                    new ClusterSelector()
+                    {
+                        ClusterGroup = "delivery"
+                    }
+                }
+            }
+        }, entity.Name(), @default);
+        
         return null;
     }
 
@@ -59,6 +111,11 @@ public class ZoneController : IResourceController<Zone>
     {
         if (entity == null) return;
 
+        var local = "fleet-local";
+        var @default = "fleet-default";       
+        
         await _kubernetesClient.Delete<V1Namespace>(entity.Metadata.Name, entity.Metadata.NamespaceProperty);
+        await _kubernetesClient.Delete<GitRepo>(entity.Name(), local);
+        await _kubernetesClient.Delete<GitRepo>(entity.Name(), @default);
     }
 }

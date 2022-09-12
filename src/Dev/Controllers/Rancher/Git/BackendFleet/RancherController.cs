@@ -1,11 +1,11 @@
-﻿namespace Dev.Controllers.Rancher.Git;
+﻿namespace Dev.Controllers.Rancher.Git.BackendFleet;
 
+using Dev.v1.Core;
+using Dev.v1.Platform.Rancher;
 using DotnetKubernetesClient;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
-using v1.Core;
-using v1.Platform.Rancher;
 
 [EntityRbac(typeof(Rancher), Verbs = RbacVerb.All)]
 public class RancherController : IResourceController<Rancher>
@@ -34,7 +34,7 @@ public class RancherController : IResourceController<Rancher>
         if (org == null) throw new Exception("please ensure you add an Organisation");
 
         var orgNs = org.Metadata.NamespaceProperty;
-        var templatesBase = "Controllers/Rancher/Git/Org";
+        var templatesBase = "Controllers/Rancher/Git/BackendFleet/Org";
         
         var @default = "fleet-default";
 
@@ -56,6 +56,7 @@ public class RancherController : IResourceController<Rancher>
         }
         catch (Exception ex)
         {
+            if (ex.Message.Contains("git scope is")) return null; //refactor
             gitScope.CleanUp();
             throw;
         }

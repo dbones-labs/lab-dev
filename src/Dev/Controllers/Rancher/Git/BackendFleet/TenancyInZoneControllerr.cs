@@ -1,19 +1,15 @@
-﻿namespace Dev.Controllers.Rancer.Git;
+﻿namespace Dev.Controllers.Rancher.Git.BackendFleet;
 
-using System.Reflection.Metadata.Ecma335;
-using v1.Core.Services;
+using Dev.Controllers.Rancher.Git;
+using Dev.v1.Core;
+using Dev.v1.Core.Services;
+using Dev.v1.Platform.Rancher;
 using DotnetKubernetesClient;
-using DotnetKubernetesClient.LabelSelectors;
-using Github.Internal;
 using k8s.Models;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
-using Rancher.Git;
-using v1.Core;
-using v1.Platform.Rancher;
-using Cluster = Dev.v1.Components.Kubernetes.Kubernetes;
-using FleetCluster = v1.Platform.Rancher.External.Fleet.Cluster;
+using Cluster = v1.Components.Kubernetes.Kubernetes;
 
 [EntityRbac(typeof(Service), Verbs = RbacVerb.All)]
 public class ServiceInClusterController : IResourceController<Service>
@@ -49,7 +45,7 @@ public class ServiceInClusterController : IResourceController<Service>
         if (context == null) throw new Exception($"cannot find tenancy context for {tenancyName}");
         var orgNs = context.Spec.OrganizationNamespace;
         
-        var templatesBase = "Controllers/Rancher/Git/Services";
+        var templatesBase = "Controllers/Rancher/Git/BackendFleet/Services";
         
         var @default = "fleet-default";
         
@@ -98,6 +94,7 @@ public class ServiceInClusterController : IResourceController<Service>
         }
         catch (Exception ex)
         {
+            if (ex.Message.Contains("git scope is")) return null; //refactor
             gitScope.CleanUp();
             throw;
         }
