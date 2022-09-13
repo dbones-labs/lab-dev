@@ -8,6 +8,7 @@ public class GitService
 {
     private readonly IKubernetesClient _kubernetesClient;
     private readonly ILogger<GitService> _logger;
+    private readonly Dictionary<string, bool> _scopesInUse = new();
     private volatile bool _scopeInUse;
     private string _repositoryDirectory = Path.Combine(FolderHelpers.BaseDirectory, "fleet-repos");
     private object _lock = new object();
@@ -24,8 +25,11 @@ public class GitService
     {
         lock (_lock)
         {
-            if (_scopeInUse) throw new Exception($"git scope is in use for {name}");
-            _scopeInUse = true;
+            if (_scopesInUse.TryGetValue(name, out var scope) && scope)
+            {
+                throw new Exception($"git scope is in use for {name}");
+            }
+            _scopesInUse[name] = true;
         }
         
         Repository? repoMeta;
@@ -52,7 +56,10 @@ public class GitService
         }
         catch (Exception e)
         {
-            _scopeInUse = false;
+            lock (_lock)
+            {
+                _scopesInUse[name] = false;
+            }
             throw;
         }
 
@@ -61,7 +68,13 @@ public class GitService
             repoMeta, 
             _repositoryDirectory, 
             token, 
-            () => _scopeInUse = false);
+            () =>
+            {
+                lock (_lock)
+                {
+                    _scopesInUse[name] = false;
+                }
+            });
 
         return new GitScope(context, _logger);
     }
