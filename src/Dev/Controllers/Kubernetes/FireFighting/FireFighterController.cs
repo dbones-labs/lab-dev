@@ -15,6 +15,7 @@ using v1.Platform.Rancher.External;
 using Account = v1.Core.Account;
 using Project = v1.Platform.Rancher.Project;
 using User = v1.Platform.Github.User;
+using RancherUser = Dev.v1.Platform.Rancher.User;
 
 [EntityRbac(typeof(FireFighter), Verbs = RbacVerb.All)]
 public class FireFighterController : IResourceController<FireFighter>
@@ -50,11 +51,16 @@ public class FireFighterController : IResourceController<FireFighter>
         
         var account = await _kubernetesClient.Get<v1.Core.Account>(spec.Account, context.Spec.OrganizationNamespace);
         if (account == null) throw new Exception($"cannot find account for {spec.Account}");
-        var githubUser = await _kubernetesClient.Get<User>(account.Name(), account.Namespace()); 
         
+        var githubUser = await _kubernetesClient.Get<User>(account.Name(), account.Namespace());
+        if (githubUser == null) throw new Exception($"cannot find github user for {spec.Account}");
+        
+        // var rancherUser = await _kubernetesClient.Get<RancherUser>(account.Name(), account.Namespace());
+        // if (rancherUser == null) throw new Exception($"cannot find rancher user for {spec.Account}");
+
         var projects = await _kubernetesClient.List<Project>(null, 
-            new EqualsSelector(Tenancy.TenancyLabel(), tenancy), 
-            new EqualsSelector(Zone.EnvironmentTypeLabel(), EnvironmentType.Production.ToString()));
+        new EqualsSelector(Tenancy.TenancyLabel(), tenancy), 
+        new EqualsSelector(Zone.EnvironmentTypeLabel(), EnvironmentType.Production.ToString()));
 
         
         foreach (var project in projects)
