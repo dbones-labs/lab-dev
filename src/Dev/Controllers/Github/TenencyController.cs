@@ -7,7 +7,9 @@ using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
 using v1.Core;
+using v1.Core.Tenancies;
 using v1.Platform.Github;
+using State = v1.Platform.Github.State;
 
 [EntityRbac(typeof(Tenancy), Verbs = RbacVerb.All)]
 public class TenancyController : IResourceController<Tenancy>
@@ -84,19 +86,34 @@ public class TenancyController : IResourceController<Tenancy>
         }, guestTeamName, tenancyName);
         
         //REPO
-        var tenancyRepo = await _kubernetesClient.Ensure(() =>new Repository
+        var tenancyRepo = await _kubernetesClient.Get<Repository>(tenancyName, tenancyName);
+        if (tenancyRepo == null)
         {
-            Spec = new()
+            await _kubernetesClient.Create(() =>new Repository
             {
-                EnforceCollaborators = false,
-                State = State.Active,
-                Type = Type.System,
-                Visibility = Visibility.Internal,
-                OrganizationNamespace = organisation
-            }
-        }, tenancyName, tenancyName);
-        
-        
+                Spec = new()
+                {
+                    EnforceCollaborators = false,
+                    State = State.Active,
+                    Type = Type.System,
+                    Visibility = Visibility.Internal,
+                    OrganizationNamespace = organisation
+                }
+            }, tenancyName, tenancyName);
+        }
+        else
+        {
+            var spec = tenancyRepo.Spec;
+            
+            //restoring a team from archive (just re-apply the correct settings)
+            spec.EnforceCollaborators = false;
+            spec.State = State.Active;
+            spec.Visibility = Visibility.Internal;
+            spec. OrganizationNamespace = organisation;
+            
+            await _kubernetesClient.Update(tenancyRepo);
+        }
+
         //COLLB
         var collab = Collaborator.Init(tenancyName, teamName, organisation, Membership.Push);
         await _kubernetesClient.Ensure(() => collab, collab.Metadata.Name, tenancyName);
@@ -105,14 +122,32 @@ public class TenancyController : IResourceController<Tenancy>
         await _kubernetesClient.Ensure(() => guestCollab, guestCollab.Metadata.Name, tenancyName);
 
         
+        //house keeping
+        var github = await _kubernetesClient.GetGithub(organisation);
+        
+        //Handle Provisioning
+        var members = await _kubernetesClient.List<Member>(tenancyName);
+        var globalCollab = Collaborator.Init(tenancyName, github.Spec.GlobalTeam, organisation, Membership.Push);
+        if (members.All(x => x.Spec.Role != MemberRole.Owner))
+        {
+            //no owner
+            //if we have no team members (no owners!), we will add the org as an owner, until we get members (someone needs to own it)
+            await _kubernetesClient.Ensure(() => globalCollab, globalCollab.Metadata.Name, tenancyName);
+        }
+        else
+        {
+            //we have an owner.
+            await _kubernetesClient.Delete(globalCollab);
+        }
+        
+        
         //PLATORM team access to ORG repo
         if (entity.Spec.IsPlatform)
         {
-            var github = await _kubernetesClient.GetGithub(organisation);
             var platformOrgCollab = Collaborator.Init(github.Spec.GlobalTeam, teamName, organisation, Membership.Push);
             await _kubernetesClient.Ensure(() => platformOrgCollab, platformOrgCollab.Metadata.Name, organisation);
         }
-        
+
         return null;
     }
 
@@ -133,9 +168,17 @@ public class TenancyController : IResourceController<Tenancy>
         await _kubernetesClient.Delete<Collaborator>(platformOrgCollabName, organisation);
         await _kubernetesClient.Delete<Collaborator>(collabName, tenancyName);
         await _kubernetesClient.Delete<Collaborator>(guestCollabName, tenancyName);
-        
-        await _kubernetesClient.Delete<Repository>(tenancyName, tenancyName);
+
         await _kubernetesClient.Delete<Team>(tenancyName, tenancyName);
+        
+        //archive tenancy repo (as issues hold an audit of firefigter)
+        var tenancyRepo = await _kubernetesClient.Get<Repository>(tenancyName, tenancyName);
+        if (tenancyRepo != null)
+        {
+            var spec = tenancyRepo.Spec;
+            spec.State = State.Archived;
+            await _kubernetesClient.Update(tenancyRepo);
+        }
     }
 }
 
