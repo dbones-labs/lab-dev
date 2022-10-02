@@ -72,6 +72,6 @@ public enum Operator
     NotEquals
 }
 
-public class TenancyStatus 
+public class TenancyStatus
 {
 }
