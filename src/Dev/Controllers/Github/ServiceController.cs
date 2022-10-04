@@ -46,15 +46,6 @@ public class ServiceController : IResourceController<Service>
             {
                 var repo =  new Repository
                 {
-                    Metadata = new()
-                    {
-                        Labels = new Dictionary<string, string>
-                        {
-                            { Repository.OwnerLabel(), tenancyName },
-                            { Repository.TypeLabel(), "service" }
-                        }
-                    },
-
                     Spec = new()
                     {
                         EnforceCollaborators = false,
@@ -65,15 +56,14 @@ public class ServiceController : IResourceController<Service>
                     }
                 };
                 
-                repo.Metadata.Labels.UpdateRange(entity.Metadata.Labels);
+                SetLabels(entity, repo);
                 return repo;
                 
             }, serviceName, serviceName);
         }
         else
         {
-            tenancyRepo.Metadata.Labels.UpdateRange(entity.Metadata.Labels);
-            
+            SetLabels(entity, tenancyRepo);
             var spec = tenancyRepo.Spec;
             
             //restoring a team from archive (just re-apply the correct settings)
@@ -95,6 +85,15 @@ public class ServiceController : IResourceController<Service>
         await _kubernetesClient.Ensure(() => guestCollab, guestCollab.Metadata.Name, serviceName);
         
         return null;
+    }
+
+    private static void SetLabels(Service entity, Repository repository)
+    {
+        var labels = repository.Metadata.Labels ?? new Dictionary<string, string>();
+        labels.Clear();
+        labels.Add(Repository.OwnerLabel(), entity.Metadata.NamespaceProperty);
+        labels.Add(Repository.TypeLabel(), "service");
+        labels.UpdateRange(entity.Metadata.Labels);
     }
 
     public async Task DeletedAsync(Service? entity)
