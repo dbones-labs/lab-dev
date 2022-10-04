@@ -38,34 +38,28 @@ public class ZoneController : IResourceController<Zone>
 
         var github = await _kubernetesClient.GetGithub(organisation);
         
-        try
+
+        await _kubernetesClient.Ensure(() => new Repository()
         {
-            await _kubernetesClient.Ensure(() => new Repository()
+            Metadata = new ()
             {
-                Metadata = new ()
+                Labels = new Dictionary<string, string>
                 {
-                    Labels = new Dictionary<string, string>
-                    {
-                        { Repository.OwnerLabel(), zoneName },
-                        { Repository.TypeLabel(), "zone" }
-                    }
-                },
-                
-                Spec = new()
-                {
-                    EnforceCollaborators = false,
-                    State = State.Active,
-                    Type = Type.System,
-                    Visibility = Visibility.Internal,
-                    OrganizationNamespace = organisation
+                    { Repository.OwnerLabel(), zoneName },
+                    { Repository.TypeLabel(), "zone" }
                 }
-            }, zoneName, zoneName);
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            throw;
-        }
+            },
+            
+            Spec = new()
+            {
+                EnforceCollaborators = false,
+                State = State.Active,
+                Type = Type.System,
+                Visibility = Visibility.Internal,
+                OrganizationNamespace = organisation
+            }
+        }, zoneName, zoneName);
+
         
         var platformTeams = await _kubernetesClient.List<Team>(
             null,
