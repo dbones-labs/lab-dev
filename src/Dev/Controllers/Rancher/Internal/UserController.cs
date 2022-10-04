@@ -37,7 +37,10 @@ public class UserAttributeController : IResourceController<UserAttribute>
         var orgNs = org.Metadata.NamespaceProperty;
 
         //as Rancher ports users in via Github, we use this as the glue to map it back to our Account
-        if (!entity.ExtraByProvider.TryGetValue("github", out var principal))
+        if (
+            entity.ExtraByProvider == null 
+            || !entity.ExtraByProvider.TryGetValue("github", out var principal) 
+            || principal == null)
         {
             _logger.LogWarning("user {Name} has not Github account", entity.Name());
             return null;
