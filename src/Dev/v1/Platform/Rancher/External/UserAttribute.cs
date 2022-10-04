@@ -9,7 +9,7 @@ using KubeOps.Operator.Entities.Annotations;
 [KubernetesEntity(Group = "management.cattle.io", ApiVersion = "v3")]
 public class UserAttribute : CustomKubernetesEntity
 {
-    public Dictionary<string, RancherPrincipal> ExtraByProvider { get; set; }
+    public Dictionary<string, RancherPrincipal?> ExtraByProvider { get; set; }
 }
 
 

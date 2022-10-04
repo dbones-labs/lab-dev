@@ -33,7 +33,7 @@ public class OrganisationController : IResourceController<Organization>
                 { "namespace", entity.Namespace() },
                 { "name", entity.Name() }
             }
-        }, "lab.dev");
+        }, "lab.dev", "default");
 
         return null;
     }

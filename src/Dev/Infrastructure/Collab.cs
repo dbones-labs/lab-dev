@@ -29,7 +29,7 @@ public static class KubernetesClientExtensions
 {
     public static async Task<Dev.v1.Core.Organization> GetOrganization(this IKubernetesClient kubernetesClient)
     {
-        var config = await kubernetesClient.Get<V1ConfigMap>("lab.dev");
+        var config = await kubernetesClient.Get<V1ConfigMap>("lab.dev", "default");
         if (config == null) throw new Exception("ensure you have added an organisation");
         var name = config.Data["name"];
         var @namespace = config.Data["namespace"];
