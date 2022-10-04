@@ -91,6 +91,15 @@ public class TenancyController : IResourceController<Tenancy>
         {
             await _kubernetesClient.Create(() =>new Repository
             {
+                Metadata = new ()
+                {
+                    Labels = new Dictionary<string, string>
+                    {
+                        { Repository.OwnerLabel(), entity.Name() },
+                        { Repository.TypeLabel(), "tenancy" }
+                    }
+                },
+                
                 Spec = new()
                 {
                     EnforceCollaborators = false,
