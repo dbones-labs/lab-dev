@@ -1,6 +1,5 @@
 ﻿namespace Dev.Controllers.Rancher;
 
-using System.Text.RegularExpressions;
 using v1.Core;
 using DotnetKubernetesClient;
 using DotnetKubernetesClient.LabelSelectors;

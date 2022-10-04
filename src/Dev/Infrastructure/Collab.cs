@@ -27,6 +27,18 @@ public static class Collab
 
 public static class KubernetesClientExtensions
 {
+    public static async Task<Dev.v1.Core.Organization> GetOrganization(this IKubernetesClient kubernetesClient)
+    {
+        var config = await kubernetesClient.Get<V1ConfigMap>("lab.dev");
+        if (config == null) throw new Exception("ensure you have added an organisation");
+        var name = config.Data["name"];
+        var @namespace = config.Data["namespace"];
+
+        var org = await kubernetesClient.Get<Dev.v1.Core.Organization>(name, @namespace);
+        if (org == null) throw new Exception("confirm the lab.dev config has the correct settings");
+        return org;
+    }
+
     public static async Task<Github> GetGithub(this IKubernetesClient kubernetesClient, string organisationNamespace)
     {
         var targetNamespace = organisationNamespace;
@@ -243,6 +255,16 @@ public static class DictionaryExtensions
         else
         {
             dictionary.Add(key, value);
+        }
+
+        return dictionary;
+    }
+
+    public static IDictionary<TKey, TValue> UpdateRange<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, IDictionary<TKey, TValue> source)
+    {
+        foreach (var value in source)
+        {
+            dictionary.Update(value.Key, value.Value);
         }
 
         return dictionary;

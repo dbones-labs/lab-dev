@@ -42,6 +42,15 @@ public class ZoneController : IResourceController<Zone>
         {
             await _kubernetesClient.Ensure(() => new Repository()
             {
+                Metadata = new ()
+                {
+                    Labels = new Dictionary<string, string>
+                    {
+                        { Repository.OwnerLabel(), zoneName },
+                        { Repository.TypeLabel(), "zone" }
+                    }
+                },
+                
                 Spec = new()
                 {
                     EnforceCollaborators = false,

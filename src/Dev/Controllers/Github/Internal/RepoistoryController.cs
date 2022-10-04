@@ -2,6 +2,7 @@
 
 using Dev.v1.Platform.Github;
 using DotnetKubernetesClient;
+using k8s.Models;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
@@ -48,7 +49,7 @@ public class RepositoryController : IResourceController<Repository>
 
         //ensure the repo exists and is update
         var repository = await HttpAssist.Get(()=> _gitHubClient.Repository.Get(github.Spec.Organisation, meta.Name));
-        
+
         if (repository == null)
         {
             var newRepository = new NewRepository(meta.Name)
@@ -120,7 +121,26 @@ public class RepositoryController : IResourceController<Repository>
         }
         
         await SetupBranchProtection(repository);
+        
+        
+        //confirm labels
+        var labels = entity.Metadata.Labels.Select(x => x.Value.ToLower().Replace(" ", "-"));
+        var topics = new List<string>(labels);
 
+        topics.Add(entity.Spec.Type == Type.Normal ? "project" : "system");
+        if (entity.Spec.State == State.Archived)
+        {
+            //yes, this is used to allow an easy filtering by topic
+            topics.Add("archived");
+        }
+
+        var correctNumberOfLabels = labels.Count() != repository.Topics.Count();
+        var correctLabels = labels.All(x => repository.Topics.Contains(x));
+        if (!correctNumberOfLabels || !correctLabels)
+        {
+            await _gitHubClient.Repository.ReplaceAllTopics(repository.Id, new RepositoryTopics(topics));
+        }
+        
 
         //this is a tenancy which we can raise FF access to
         if (entity.Spec.Type == Type.System)

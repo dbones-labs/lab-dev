@@ -30,10 +30,8 @@ public class GithubController : IResourceController<Github>
         if (entity.Status.CredentialsReference != null) return null;
         if (entity.Metadata.Name != "github") throw new Exception("please call the Github Resource - 'github'");
 
-        var orgs = await _kubernetesClient.List<Organization>(entity.Metadata.NamespaceProperty);
-        var org = orgs.FirstOrDefault();
-        if (org == null) throw new Exception("please ensure you add an Organisation");
-
+        var org = await _kubernetesClient.GetOrganization();
+        
         var orgNs = org.Metadata.NamespaceProperty;
         var secret = await _kubernetesClient.Get<V1Secret>(entity.Spec.Credentials, orgNs);
         if (secret == null)
@@ -44,6 +42,15 @@ public class GithubController : IResourceController<Github>
         //the main org repo
         await _kubernetesClient.Ensure(() => new Repository()
         {
+            Metadata = new ()
+            {
+                Labels = new Dictionary<string, string>
+                {
+                    { Repository.OwnerLabel(), org.Name() },
+                    { Repository.TypeLabel(), "organization" }
+                }
+            },
+            
             Spec = new()
             {
                 EnforceCollaborators = false,
@@ -67,6 +74,15 @@ public class GithubController : IResourceController<Github>
         var archivedTeamName = entity.Spec.ArchiveTeam;
         await _kubernetesClient.Ensure(() => new Team
         {
+            Metadata = new ()
+            {
+                Labels = new Dictionary<string, string>
+                {
+                    { Repository.OwnerLabel(), org.Name() },
+                    { Repository.TypeLabel(), "archive" }
+                }
+            },
+            
             Spec = new()
             {
                 Type = Type.System,

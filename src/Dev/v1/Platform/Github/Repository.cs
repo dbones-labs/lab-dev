@@ -8,6 +8,8 @@ using KubeOps.Operator.Entities.Annotations;
 public class Repository : CustomKubernetesEntity<RepositorySpec, RepositoryStatus>
 {
     public static string RepositoryLabel() => "github.lab.dev/repository";
+    public static string TypeLabel() => "github.lab.dev/type";
+    public static string OwnerLabel() => "github.lab.dev/owner";
 }
 
 public class RepositorySpec
