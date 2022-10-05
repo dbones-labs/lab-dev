@@ -32,7 +32,7 @@ public class ServiceController : IResourceController<Service>
     public async Task<ResourceControllerResult?> ReconcileAsync(Service? entity)
     {
         if (entity == null) return null;
-        await _kubernetesClient.Ensure(() => new V1Namespace(), entity.Namespace());
+        await _kubernetesClient.Ensure(() => new V1Namespace(), entity.Name());
         return null;
     }
 

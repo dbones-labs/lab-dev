@@ -71,7 +71,7 @@ public class TenancyController : IResourceController<Tenancy>
             })
             .ToArray();
         
-        var candidateZones = await _kubernetesClient.List<Zone>(entity.Metadata.NamespaceProperty, serverQueryList);
+        var candidateZones = await _kubernetesClient.List<ZoneAttribute>(entity.Metadata.NamespaceProperty, serverQueryList);
         
         //anything we cannot do as a selector, we do in mem :(
         candidateZones = candidateZones

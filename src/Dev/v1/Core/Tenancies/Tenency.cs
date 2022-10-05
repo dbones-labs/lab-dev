@@ -35,7 +35,7 @@ public class TenancySpec
     /// </summary>
     public List<Selector> ZoneFilter { get; set; } = new();
 
-    public bool Where(Zone zone)
+    public bool Where(ZoneAttribute zone)
     {
         return !ZoneFilter.Any() || ZoneFilter.All(x => x.Where(zone));
     }
@@ -47,7 +47,7 @@ public class Selector
     [Required] public Operator Operator { get; set; } = Operator.Equals;
     [Required] public string Value { get; set; } = string.Empty;
 
-    public bool Where(Zone zone)
+    public bool Where(ZoneAttribute zone)
     {
         var filterForValue = Value;
         var hasLabel = zone.Metadata.Labels.TryGetValue(Key, out var value);

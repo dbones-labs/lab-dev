@@ -1,5 +1,6 @@
 ﻿namespace Dev.Controllers.Github;
 
+using System.Reflection.Metadata;
 using DotnetKubernetesClient;
 using Internal;
 using k8s.Models;
@@ -50,7 +51,7 @@ public class ServiceController : IResourceController<Service>
                     {
                         EnforceCollaborators = false,
                         State = State.Active,
-                        Type = Type.System,
+                        Type = Type.Normal,
                         Visibility = Visibility.Internal,
                         OrganizationNamespace = organisationNamespace
                     }
@@ -69,8 +70,10 @@ public class ServiceController : IResourceController<Service>
             //restoring a team from archive (just re-apply the correct settings)
             spec.EnforceCollaborators = false;
             spec.State = State.Active;
+            spec.Type = Type.Normal;
             spec.Visibility = Visibility.Internal;
             spec.OrganizationNamespace = organisationNamespace;
+            
             
             await _kubernetesClient.Update(tenancyRepo);
         }
@@ -89,11 +92,33 @@ public class ServiceController : IResourceController<Service>
 
     private static void SetLabels(Service entity, Repository repository)
     {
-        var labels = repository.Metadata.Labels ?? new Dictionary<string, string>();
-        labels.Clear();
-        labels.Add(Repository.OwnerLabel(), entity.Metadata.NamespaceProperty);
-        labels.Add(Repository.TypeLabel(), "service");
-        labels.UpdateRange(entity.Metadata.Labels);
+        //not pretty :(
+        Func<IDictionary<string, string>, IDictionary<string, string>> filterOutDefaults = input =>
+        {
+            return input
+                .Where(x => !x.Key.Contains("cattle.io"))
+                .Where(x => !x.Key.Contains("kubernetes.io"))
+                .ToDictionary(x => x.Key, x => x.Value);
+        };
+        
+        Func<IDictionary<string, string>, IDictionary<string, string>> filterForDefaults = input =>
+        {
+            return input
+                .Where(x => x.Key.Contains("cattle.io"))
+                .Where(x => x.Key.Contains("kubernetes.io"))
+                .ToDictionary(x => x.Key, x => x.Value);
+        };
+        
+        repository.Metadata.Labels ??= new Dictionary<string, string>();
+
+        var labels = filterOutDefaults(repository.Metadata.Labels);
+        labels.Update(Repository.OwnerLabel(), entity.Metadata.NamespaceProperty);
+        labels.Update(Repository.TypeLabel(), "service");
+        labels.UpdateRange(filterOutDefaults(entity.Metadata.Labels));
+
+        //keep the default set by k8s and rancher and apply the custom ones
+        repository.Metadata.Labels = filterForDefaults(repository.Metadata.Labels);
+        repository.Metadata.Labels.UpdateRange(labels);
     }
 
     public async Task DeletedAsync(Service? entity)

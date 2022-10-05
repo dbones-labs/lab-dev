@@ -6,13 +6,10 @@ using DotnetKubernetesClient;
 using DotnetKubernetesClient.LabelSelectors;
 using k8s;
 using k8s.Models;
-using KubeOps.Operator.Entities;
 using Marvin.JsonPatch;
 using Newtonsoft.Json;
 using Octokit;
 using v1.Core;
-using Organization = Octokit.Organization;
-using Repository = v1.Platform.Github.Repository;
 using User = v1.Platform.Github.User;
 
 [Obsolete("need to refactor", false)]

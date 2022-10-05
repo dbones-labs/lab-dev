@@ -52,6 +52,43 @@ public class ZoneController : IResourceController<Zone>
             }
         }, TenancyContext.GetName(), entity.Metadata.Name);
 
+        /*
+                         [FleetCluster.Name()] = entity.Name(),
+                [Zone.CloudLabel()] = zone.Spec.Cloud,
+                [] = zone.Spec.Environment,
+                [Zone.RegionLabel()] = zone.Spec.Region,
+                [Zone.ZoneLabel()] = zone.Metadata.Name,
+                [Zone.EnvironmentTypeLabel()] = zone.Status.Type.ToString()
+         */
+        
+        
+        var attribute = await _kubernetesClient.Get<ZoneAttribute>(entity.Name(), entity.Namespace());
+        if (attribute == null)
+        {
+            await _kubernetesClient.Create(() => new ZoneAttribute()
+            {
+                Metadata = new V1ObjectMeta()
+                {
+                    Labels = new Dictionary<string, string>()
+                    {
+                        { Zone.CloudLabel(), entity.Spec.Cloud },
+                        { Zone.EnvironmentLabel(), entity.Spec.Environment },
+                        { Zone.RegionLabel(), entity.Spec.Region },
+                        { Zone.ZoneLabel(), entity.Name() },
+                        { Zone.EnvironmentTypeLabel(), env.Spec.Type.ToString() },
+                    }
+                }
+            }, entity.Name(), entity.Namespace());
+        }
+        else
+        {
+            attribute.Metadata.Labels[Zone.CloudLabel()] = entity.Spec.Cloud;
+            attribute.Metadata.Labels[Zone.EnvironmentLabel()] = entity.Spec.Environment;
+            attribute.Metadata.Labels[Zone.RegionLabel()] = entity.Spec.Region;
+            attribute.Metadata.Labels[Zone.ZoneLabel()] = entity.Name();
+            attribute.Metadata.Labels[Zone.EnvironmentTypeLabel()] = env.Spec.Type.ToString();
+        }
+
         if (entity.Name() == "control")
         {
             return null;
@@ -114,8 +151,9 @@ public class ZoneController : IResourceController<Zone>
         var local = "fleet-local";
         var @default = "fleet-default";       
         
-        await _kubernetesClient.Delete<V1Namespace>(entity.Metadata.Name, entity.Metadata.NamespaceProperty);
+        await _kubernetesClient.Delete<ZoneAttribute>(entity.Name(), entity.Namespace());
         await _kubernetesClient.Delete<GitRepo>(entity.Name(), local);
         await _kubernetesClient.Delete<GitRepo>(entity.Name(), @default);
+        await _kubernetesClient.Delete<V1Namespace>(entity.Metadata.Name, entity.Metadata.NamespaceProperty);
     }
 }
