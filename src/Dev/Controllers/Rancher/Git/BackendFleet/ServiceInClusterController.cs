@@ -34,7 +34,8 @@ public class ServiceInClusterController : IResourceController<Service>
     public async Task<ResourceControllerResult?> ReconcileAsync(Service? entity)
     {
         if (entity == null) return null;
-        
+
+        return null;
         
         //the concept here, is to provide the Tenancy access to the Service Namespace (and also create it if its missing)
      
@@ -69,7 +70,7 @@ public class ServiceInClusterController : IResourceController<Service>
                     
                     var content = _templating.Render(Path.Combine(templatesBase, "fleet.yaml"), new
                     {
-                        Environment = zoneResource.Spec.Environment,
+                        Zone = zone.Name,
                         Cluster = kubernetes.Name
                     });
                     gitScope.EnsureFile($"{zoneResource.Spec.Environment}/kubernetes/{kubernetes.Name}/fleet.yaml", content);
@@ -77,7 +78,13 @@ public class ServiceInClusterController : IResourceController<Service>
 
                     var cluster = await _kubernetesClient.Get<Cluster>(kubernetes.Name, zone.Name);
                     var project = await _kubernetesClient.Get<Project>($@"{cluster.Metadata.Name}.{tenancyName}", zone.Name);
-                    
+                    if (project == null)
+                    {
+                        _logger.LogError($"{tenancyName} does not have access to {cluster.Name()}");
+                        continue;
+                    }
+
+
                     content = _templating.Render(Path.Combine(templatesBase, "service.yaml"), new
                     {
                         ProjectId = project.Status.Id,
@@ -85,7 +92,7 @@ public class ServiceInClusterController : IResourceController<Service>
                         Service = entity.Name(),
                         Tenancy = entity.Namespace()
                     });
-                    gitScope.EnsureFile($"{zoneResource.Spec.Environment}/kubernetes/{kubernetes.Name}/{entity.Name()}.yaml", content);
+                    gitScope.EnsureFile($"{zone.Name}/kubernetes/{kubernetes.Name}/{entity.Name()}.yaml", content);
                 }
             }
             

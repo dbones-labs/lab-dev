@@ -37,7 +37,9 @@ public class ZoneController : IResourceController<Zone>
         if (ns == null) throw new Exception($"cannot find zone namespace {zoneName}");
 
         var github = await _kubernetesClient.GetGithub(organisation);
-        
+        var attribute = await _kubernetesClient.Get<ZoneAttribute>(entity.Name(), entity.Namespace());
+        if (attribute == null) throw new Exception($"zone {entity.Name()} is missing a attribute");
+
 
         await _kubernetesClient.Ensure(() => new Repository()
         {
@@ -78,7 +80,7 @@ public class ZoneController : IResourceController<Zone>
             if (tenancy == null) continue;
             
             //the team do not need access. (if they were collabing they will be removed)
-            var accessToZone = tenancy.Spec.Where(entity);
+            var accessToZone = tenancy.Spec.Where(attribute);
             if (!accessToZone) continue;
             
             // no change
