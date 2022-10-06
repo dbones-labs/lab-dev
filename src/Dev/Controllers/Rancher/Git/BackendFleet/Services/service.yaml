@@ -5,13 +5,13 @@ kind: Namespace
 metadata:
   annotations:
     field.cattle.io/containerDefaultResourceLimit: '{}'
-    field.cattle.io/projectId: {{kubernetesId}}:{{projectId}}
+    field.cattle.io/projectId: {{kubernetes}}:{{project}}
     field.cattle.io/resourceQuota: '{"limit" : {} }'
     lifecycle.cattle.io/create.namespace-auth: "true"
   finalizers:
     - controller.cattle.io/namespace-auth
   labels:
-    field.cattle.io/projectId: {{projectId}}
+    field.cattle.io/projectId: {{project}}
   name: {{service}}
 spec:
   finalizers:
