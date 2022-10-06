@@ -2,5 +2,5 @@
   - name: {{zone}}-{{cluster}}
     clusterSelector:
       matchLabels:
-        lab.dev/environment: {{zone}}
+        lab.dev/zone: {{zone}}
         lab.dev/name : {{cluster}}

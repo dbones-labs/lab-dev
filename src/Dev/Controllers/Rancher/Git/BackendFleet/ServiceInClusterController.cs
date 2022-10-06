@@ -35,8 +35,6 @@ public class ServiceInClusterController : IResourceController<Service>
     {
         if (entity == null) return null;
 
-        return null;
-        
         //the concept here, is to provide the Tenancy access to the Service Namespace (and also create it if its missing)
      
         //setup project in the zone
@@ -73,7 +71,7 @@ public class ServiceInClusterController : IResourceController<Service>
                         Zone = zone.Name,
                         Cluster = kubernetes.Name
                     });
-                    gitScope.EnsureFile($"{zoneResource.Spec.Environment}/kubernetes/{kubernetes.Name}/fleet.yaml", content);
+                    gitScope.EnsureFile($"{zone.Name}/kubernetes/{kubernetes.Name}/fleet.yaml", content);
 
 
                     var cluster = await _kubernetesClient.Get<Cluster>(kubernetes.Name, zone.Name);
@@ -87,8 +85,8 @@ public class ServiceInClusterController : IResourceController<Service>
 
                     content = _templating.Render(Path.Combine(templatesBase, "service.yaml"), new
                     {
-                        ProjectId = project.Status.Id,
-                        KubernetesId = cluster.Status.ClusterId,
+                        Project = project.Status.Id,
+                        Kubernetes = cluster.Status.ClusterId,
                         Service = entity.Name(),
                         Tenancy = entity.Namespace()
                     });
@@ -137,7 +135,7 @@ public class ServiceInClusterController : IResourceController<Service>
 
                 foreach (var kubernetes in zone.Components.Where(x => x.Provider == "kubernetes"))
                 {
-                    gitScope.RemoveFile($"{zoneResource.Spec.Environment}/kubernetes/{kubernetes.Name}/{entity.Name()}.yaml");
+                    gitScope.RemoveFile($"{zone.Name}/kubernetes/{kubernetes.Name}/{entity.Name()}.yaml");
                 }
             }
 

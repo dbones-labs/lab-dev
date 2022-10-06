@@ -65,14 +65,17 @@ public class KubernetesController : IResourceController<Cluster>
                 [Zone.EnvironmentTypeLabel()] = zone.Status.Type.ToString()
             });
         }
+        
+        //the following does not seem to be applied correctly
         // var rl = rancherCluster.Metadata.Labels;
         // await _kubernetesClient.UpsertCrdLabel(rancherCluster, new Dictionary<string, string?>(rl)
         // {
+        //     [FleetCluster.Name()] = entity.Name(),
         //     [Zone.CloudLabel()] = zone.Spec.Cloud,
         //     [Zone.EnvironmentLabel()] = zone.Spec.Environment,
         //     [Zone.RegionLabel()] = zone.Spec.Region,
         //     [Zone.ZoneLabel()] = zone.Metadata.Name,
-        //     [Zone.ProductionLabel()] = zone.Status.IsProduction.ToString()
+        //     [Zone.EnvironmentTypeLabel()] = zone.Status.Type.ToString()
         // });
         
         //store this info in the state, as this will be in conflict with Gitops if we stored it in the labels.
