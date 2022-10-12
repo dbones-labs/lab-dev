@@ -90,7 +90,7 @@ public class ServiceInClusterController : IResourceController<Service>
                         Service = entity.Name(),
                         Tenancy = entity.Namespace()
                     });
-                    gitScope.EnsureFile($"{zone.Name}/kubernetes/{kubernetes.Name}/{entity.Name()}.yaml", content);
+                    gitScope.EnsureFile($"{zone.Name}/kubernetes/{kubernetes.Name}/overlays/deploy/{entity.Name()}.yaml", content);
                 }
             }
             

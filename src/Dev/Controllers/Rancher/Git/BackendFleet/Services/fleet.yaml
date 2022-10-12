@@ -4,3 +4,6 @@
       matchLabels:
         lab.dev/zone: {{zone}}
         lab.dev/name : {{cluster}}
+    yaml:
+      overlays:
+        - deploy
