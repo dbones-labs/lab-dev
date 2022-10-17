@@ -9,6 +9,7 @@ using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
 using v1.Core;
+using v1.Platform.Github;
 using v1.Platform.Rancher;
 using Cluster = Dev.v1.Components.Kubernetes.Kubernetes;
 
@@ -39,7 +40,7 @@ public class TenancyInZoneController : IResourceController<TenancyInZone>
 
         var zone = await _kubernetesClient.Get<Zone>(zoneName, context.Spec.OrganizationNamespace);
         if (zone == null) throw new Exception($"cannot find zone {zoneName}");
-        
+
         //need to create a project in all clusters of the zxone
         var clusters = await _kubernetesClient.List<Cluster>(zoneName);
 
@@ -66,6 +67,10 @@ public class TenancyInZoneController : IResourceController<TenancyInZone>
                 }
             }, $@"{cluster.Metadata.Name}.{tenancyName}", zoneName);
         }
+        
+        
+        
+        
 
         return null;
     }

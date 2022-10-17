@@ -28,17 +28,36 @@ spec:
 
                   should be a GOD user.
                 type: string
-              platformMemberRole:
+              globalDefaultRole:
+                description: the default role to set everyone to, by default user-base is seen to be more secure
                 type: string
-              platformProductionMemberRole:
+              globalOrganizationRole:
                 type: string
-              tenancyGuestRole:
+              globalZoneMemberRole:
+                type: string
+              globalZoneFireFighterMemberRole:
+                type: string
+              clusterZoneMemberRole:
+                type: string
+              clusterProductionZoneMemberRole:
+                type: string
+              clusterZoneFireFighterMemberRole:
+                type: string
+              clusterTenancyMemberRole:
+                type: string
+              clusterProductionTenancyMemberRole:
                 type: string
               tenancyMemberRole:
                 type: string
               tenancyProductionMemberRole:
                 type: string
               tenancyFireFighterMemberRole:
+                type: string
+              tenancyGuestRole:
+                type: string
+              platformMemberRole:
+                type: string
+              platformProductionMemberRole:
                 type: string
             type: object
         type: object
