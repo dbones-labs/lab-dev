@@ -87,6 +87,8 @@ public class ProjectController : IResourceController<Project>
         if (team == null) throw new Exception($"cannot find github team for {entity.Spec.Tenancy}");
         if (!team.Status.Id.HasValue) throw new Exception($"github team is not synced (yet) - {entity.Spec.Tenancy}");
         
+        
+        //Tenancy Role --> Project
         var roleName = cluster.Status.Type == EnvironmentType.Production
             ? rancher.Spec.TenancyProductionMemberRole
             : rancher.Spec.TenancyMemberRole;
@@ -109,6 +111,53 @@ public class ProjectController : IResourceController<Project>
                 return b;
             }, null, entity.Status.Id);
         }
+        
+        
+        //Zone/cluster access
+        var tenancyResource = await _kubernetesClient.Get<Tenancy>(tenancy, context.Spec.OrganizationNamespace);
+        if (tenancyResource == null) throw new Exception($"cannot find Tenancy for {tenancy}");
+
+        string clusterRoleName = null;
+        if (tenancyResource.Spec.IsPlatform)
+        {
+            //Zone Role --> cluster
+            clusterRoleName = cluster.Status.Type == EnvironmentType.Production
+                ? rancher.Spec.ClusterProductionZoneMemberRole
+                : rancher.Spec.ClusterZoneMemberRole;
+        }
+        else
+        {
+            //Tenancy Role --> cluster
+            clusterRoleName = cluster.Status.Type == EnvironmentType.Production
+                ? rancher.Spec.ClusterProductionTenancyMemberRole
+                : rancher.Spec.ClusterTenancyMemberRole;
+        }
+
+        if (string.IsNullOrWhiteSpace(clusterRoleName)) return null;
+
+        var clusterBindingSelector = new EqualsSelector(ClusterRoleTemplateBinding.Tenancy(), tenancy);
+        var clusterBindings = await _kubernetesClient.List<ClusterRoleTemplateBinding>(cluster.Status.ClusterId, clusterBindingSelector);
+        
+        var desiredRoles = clusterRoleName.Split(",").Select(x => x.Trim()).ToHashSet();
+        var existingRoles = clusterBindings.ToDictionary(k=> k.RoleTemplateName, v => v);
+        var missingRoles = desiredRoles.Where(x => !existingRoles.Keys.Contains(x));
+        var obsoleteRoles = existingRoles.Where(x => !desiredRoles.Contains(x.Key)).Select(x=>x.Value);
+
+        foreach (var missingRole in missingRoles)
+        {
+            await _kubernetesClient.Create(() =>  
+            {
+                var b = ClusterRoleTemplateBinding.InitGroup(
+                    cluster.Status.ClusterId,
+                    ProjectType.Tenancy, 
+                    tenancy,
+                    team.Status.Id.Value,
+                    missingRole);
+                return b;
+            });
+        }
+        
+        if (clusterBindings.Any()) await _kubernetesClient.Delete(obsoleteRoles);
 
         return null;
     }
@@ -139,5 +188,9 @@ public class ProjectController : IResourceController<Project>
         var bindings = await _kubernetesClient.List<ProjectRoleTemplateBinding>(entity.Status.Id, bindingSelector);
         var binding = bindings.FirstOrDefault();
         if (binding != null) await _kubernetesClient.Delete(binding);
+        
+        var clusterBindingSelector = new EqualsSelector(ClusterRoleTemplateBinding.Tenancy(), entity.Spec.Tenancy);
+        var clusterBindings = await _kubernetesClient.List<ClusterRoleTemplateBinding>(cluster.Status.ClusterId, clusterBindingSelector);
+        if (clusterBindings.Any()) await _kubernetesClient.Delete(clusterBindings);
     }
 }
