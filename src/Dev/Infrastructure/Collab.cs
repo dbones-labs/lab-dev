@@ -160,6 +160,7 @@ public static class KubernetesClientExtensions
 
         meta.Name ??= name;
         meta.NamespaceProperty ??= @namespace;
+        meta.NamespaceProperty ??= "default";
 
         if (meta.Name == null && meta.GenerateName == null)
             throw new Exception("no name passed in, or generatedName");
