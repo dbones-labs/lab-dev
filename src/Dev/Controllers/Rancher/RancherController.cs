@@ -11,6 +11,7 @@ using v1.Core;
 using v1.Core.Services;
 using v1.Platform.Github;
 using v1.Platform.Rancher;
+using v1.Platform.Rancher.External;
 using v1.Platform.Rancher.External.Fleet;
 
 [EntityRbac(typeof(Rancher), Verbs = RbacVerb.All)]
@@ -278,6 +279,34 @@ public class RancherController : IResourceController<Rancher>
             }
         }, "engineering", @default);
 
+        await _kubernetesClient.Ensure(() =>
+        {
+            var role = GlobalRole.Init("lab-view-fleet", entity.Spec.TechnicalUser);
+            role.Rules = new List<V1PolicyRule>
+            {
+                new V1PolicyRule()
+                {
+                    ApiGroups = new List<string>() { "fleet.cattle.io" },
+                    Verbs = new List<string>() { "get", "list", "watch" },
+                    Resources = new List<string>()
+                    {
+                        "bundles",
+                        "bundledeployments",
+                        "bundlenamespacemappings",
+                        "clusters",
+                        "clustergroups",
+                        "contents",
+                        "fleetworkspaces",
+                        "gitjobs",
+                        "gitrepos",
+                        "gitreporestrictions"
+                    }
+                }
+            };
+            return role;
+        }, "lab-view-fleet", "default");
+        
+        
         return null;
     }
 }
