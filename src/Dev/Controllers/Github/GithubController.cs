@@ -2,6 +2,7 @@
 
 using DotnetKubernetesClient;
 using Infrastructure;
+using Infrastructure.Caching;
 using Internal;
 using k8s.Models;
 using KubeOps.Operator.Controller;
@@ -12,22 +13,23 @@ using Organization = v1.Core.Organization;
 using Repository = v1.Platform.Github.Repository;
 
 [EntityRbac(typeof(Github), Verbs = RbacVerb.All)]
-public class GithubController : IResourceController<Github>
+public class GithubController : ResourceController<Github>
 {
     private readonly IKubernetesClient _kubernetesClient;
     private readonly ILogger<GithubController> _logger;
 
     public GithubController(
+        ResourceCache resourceCache,
         IKubernetesClient kubernetesClient,
-        ILogger<GithubController> logger)
+        ILogger<GithubController> logger
+        ) : base(resourceCache)
     {
         _kubernetesClient = kubernetesClient;
         _logger = logger;
     }
 
-    public async Task<ResourceControllerResult?> ReconcileAsync(Github? entity)
+    protected override async Task<ResourceControllerResult?> InternalReconcileAsync(Github entity)
     {
-        if (entity == null) return null;
         if (entity.Status.CredentialsReference != null) return null;
         if (entity.Metadata.Name != "github") throw new Exception("please call the Github Resource - 'github'");
 
@@ -92,17 +94,5 @@ public class GithubController : IResourceController<Github>
         }, archivedTeamName, orgNs);
 
         return null;
-    }
-
-    public async Task DeletedAsync(Github? entity)
-    {
-        if (entity == null)
-        {
-            return;
-        }
-
-        //var orgNs = entity.Metadata.NamespaceProperty;
-        //await _kubernetesClient.Delete<Repository>(entity.Spec.GlobalTeam, orgNs);
-        //await _kubernetesClient.Delete<Repository>(entity.Spec.ArchiveTeam, orgNs);
     }
 }

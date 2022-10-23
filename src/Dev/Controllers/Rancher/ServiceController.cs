@@ -5,6 +5,7 @@ using DotnetKubernetesClient;
 using DotnetKubernetesClient.LabelSelectors;
 using Github.Internal;
 using Infrastructure;
+using Infrastructure.Caching;
 using k8s.Models;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
@@ -16,31 +17,30 @@ using v1.Platform.Rancher.External.Fleet;
 /// setup the service in lab
 /// </summary>
 [EntityRbac(typeof(Service), Verbs = RbacVerb.All)]
-public class ServiceController : IResourceController<Service>
+public class ServiceController : ResourceController<Service>
 {
     private readonly IKubernetesClient _kubernetesClient;
     private readonly ILogger<ServiceController> _logger;
 
     public ServiceController(
+        ResourceCache resourceCache,
         IKubernetesClient kubernetesClient,
         ILogger<ServiceController> logger
-        )
+        ) : base(resourceCache)
     {
         _kubernetesClient = kubernetesClient;
         _logger = logger;
     }
 
-    public async Task<ResourceControllerResult?> ReconcileAsync(Service? entity)
+    protected override async Task<ResourceControllerResult?> InternalReconcileAsync(Service entity)
     {
-        if (entity == null) return null;
         await _kubernetesClient.Ensure(() => new V1Namespace(), entity.Name());
         return null;
     }
 
 
-    public async Task DeletedAsync(Service? entity)
+    protected override async Task InternalDeletedAsync(Service entity)
     {
-        if (entity == null) return;
         await _kubernetesClient.Delete<V1Namespace>(entity.Namespace());
     }
 }

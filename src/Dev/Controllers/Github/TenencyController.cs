@@ -2,9 +2,8 @@
 
 using DotnetKubernetesClient;
 using Infrastructure;
-using Internal;
+using Infrastructure.Caching;
 using k8s.Models;
-using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
 using v1.Core;
@@ -13,24 +12,23 @@ using v1.Platform.Github;
 using State = v1.Platform.Github.State;
 
 [EntityRbac(typeof(Tenancy), Verbs = RbacVerb.All)]
-public class TenancyController : IResourceController<Tenancy>
+public class TenancyController : ResourceController<Tenancy>
 {
     private readonly IKubernetesClient _kubernetesClient;
     private readonly ILogger<TenancyController> _logger;
 
     public TenancyController(
+        ResourceCache resourceCache,
         IKubernetesClient kubernetesClient,
         ILogger<TenancyController> logger
-        )
+        ) : base(resourceCache)
     {
         _kubernetesClient = kubernetesClient;
         _logger = logger;
     }
 
-    public async Task<ResourceControllerResult?> ReconcileAsync(Tenancy? entity)
+    protected override async Task<ResourceControllerResult?> InternalReconcileAsync(Tenancy entity)
     {
-        if (entity == null) return null;
-
         var tenancyName = entity.Metadata.Name; //Tenancy.GetNamespaceName(entity.Metadata.Name);
         var organisation = entity.Metadata.NamespaceProperty;
         var teamName = Team.GetTeamName(entity.Metadata.Name);
@@ -162,10 +160,8 @@ public class TenancyController : IResourceController<Tenancy>
     }
 
 
-    public async Task DeletedAsync(Tenancy? entity)
+    protected override async Task InternalDeletedAsync(Tenancy entity)
     {
-        if (entity == null) return;
-
         var tenancyName = entity.Metadata.Name;   //Tenancy.GetNamespaceName(entity.Metadata.Name);
         var organisation = entity.Metadata.NamespaceProperty;
         var teamName = Team.GetTeamName(entity.Metadata.Name);

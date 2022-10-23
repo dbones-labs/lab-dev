@@ -4,6 +4,7 @@ using DotnetKubernetesClient;
 using DotnetKubernetesClient.LabelSelectors;
 using Github.Internal;
 using Infrastructure;
+using Infrastructure.Caching;
 using k8s.Models;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
@@ -16,23 +17,23 @@ using User = v1.Platform.Rancher.External.User;
 using InternalUser = Dev.v1.Platform.Rancher.User;
 
 [EntityRbac(typeof(User), Verbs = RbacVerb.All)]
-public class UserController : IResourceController<User>
+public class UserController : ResourceController<User>
 {
     private readonly IKubernetesClient _kubernetesClient;
     private readonly ILogger<UserController> _logger;
 
     public UserController(
+        ResourceCache resourceCache,
         IKubernetesClient kubernetesClient,
-        ILogger<UserController> logger)
+        ILogger<UserController> logger
+        ): base(resourceCache)
     {
         _kubernetesClient = kubernetesClient;
         _logger = logger;
     }
 
-    public async Task<ResourceControllerResult?> ReconcileAsync(User? entity)
+    protected override async Task<ResourceControllerResult?> InternalReconcileAsync(User entity)
     {
-        if (entity == null) return null;
-
         var org = await _kubernetesClient.GetOrganization();
         var orgNs = org.Namespace();
 
@@ -80,7 +81,5 @@ public class UserController : IResourceController<User>
         }, user.Name(), orgNs);
 
         return null;
-
-
     }
 }

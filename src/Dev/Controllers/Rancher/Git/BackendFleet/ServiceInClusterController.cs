@@ -5,6 +5,8 @@ using Dev.v1.Core;
 using Dev.v1.Core.Services;
 using Dev.v1.Platform.Rancher;
 using DotnetKubernetesClient;
+using Infrastructure;
+using Infrastructure.Caching;
 using Infrastructure.Git;
 using Infrastructure.Templates;
 using k8s.Models;
@@ -14,7 +16,7 @@ using KubeOps.Operator.Rbac;
 using Cluster = v1.Components.Kubernetes.Kubernetes;
 
 [EntityRbac(typeof(Service), Verbs = RbacVerb.All)]
-public class ServiceInClusterController : IResourceController<Service>
+public class ServiceInClusterController : ResourceController<Service>
 {
     private readonly IKubernetesClient _kubernetesClient;
     private readonly GitService _gitService;
@@ -22,10 +24,12 @@ public class ServiceInClusterController : IResourceController<Service>
     private readonly ILogger<ServiceInClusterController> _logger;
 
     public ServiceInClusterController(
+        ResourceCache resourceCache,
         IKubernetesClient kubernetesClient,
         GitService gitService,
         Templating templating,
-        ILogger<ServiceInClusterController> logger)
+        ILogger<ServiceInClusterController> logger
+        ) : base(resourceCache)
     {
         _kubernetesClient = kubernetesClient;
         _gitService = gitService;
@@ -33,10 +37,8 @@ public class ServiceInClusterController : IResourceController<Service>
         _logger = logger;
     }
 
-    public async Task<ResourceControllerResult?> ReconcileAsync(Service? entity)
+    protected override async Task<ResourceControllerResult?> InternalReconcileAsync(Service entity)
     {
-        if (entity == null) return null;
-
         //the concept here, is to provide the Tenancy access to the Service Namespace (and also create it if its missing)
      
         //setup project in the zone
@@ -109,10 +111,8 @@ public class ServiceInClusterController : IResourceController<Service>
         return null;
     }
     
-    public async Task DeletedAsync(Service? entity)
+    protected override async Task InternalDeletedAsync(Service entity)
     {
-        if (entity == null) return;
-        
         //setup project in the zone
         var tenancyName = entity.Metadata.NamespaceProperty;
         

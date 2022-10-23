@@ -3,6 +3,7 @@
 using System.Runtime.CompilerServices;
 using DotnetKubernetesClient;
 using Infrastructure;
+using Infrastructure.Caching;
 using k8s.Models;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
@@ -11,26 +12,26 @@ using Octokit;
 using v1.Platform.Github;
 
 [EntityRbac(typeof(TeamMember), Verbs = RbacVerb.All)]
-public class TeamMemberController  :  IResourceController<TeamMember>
+public class TeamMemberController : ResourceController<TeamMember>
 {
     private readonly GitHubClient _gitHubClient;
     private readonly IKubernetesClient _kubernetesClient;
     private readonly ILogger<TeamMemberController> _logger;
 
     public TeamMemberController(
+        ResourceCache resourceCache,
         GitHubClient gitHubClient,
         IKubernetesClient kubernetesClient,
-        ILogger<TeamMemberController> logger)
+        ILogger<TeamMemberController> logger
+        ) : base(resourceCache)
     {
         _gitHubClient = gitHubClient;
         _kubernetesClient = kubernetesClient;
         _logger = logger;
     }
 
-    public async Task<ResourceControllerResult?> ReconcileAsync(TeamMember? entity)
+    protected override async Task<ResourceControllerResult?> InternalReconcileAsync(TeamMember entity)
     {
-        if (entity == null) return null;
-
         var github = await _kubernetesClient.GetGithub(entity.Metadata.NamespaceProperty);
         var token = await _kubernetesClient.GetSecret(github.Metadata.NamespaceProperty, github.Spec.Credentials);
         if(!string.IsNullOrWhiteSpace(token)) _gitHubClient.Auth(token);
@@ -54,10 +55,8 @@ public class TeamMemberController  :  IResourceController<TeamMember>
         return null;
     }
     
-    public async Task DeletedAsync(TeamMember? entity)
+    protected override async Task InternalDeletedAsync(TeamMember entity)
     {
-        if (entity == null) return;
-
         var github = await _kubernetesClient.GetGithub(entity.Metadata.NamespaceProperty);
         var token = await _kubernetesClient.GetSecret(github.Metadata.NamespaceProperty, github.Spec.Credentials);
         if(!string.IsNullOrWhiteSpace(token)) _gitHubClient.Auth(token);

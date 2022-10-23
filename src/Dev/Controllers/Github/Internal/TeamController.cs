@@ -3,6 +3,7 @@
 using Dev.v1.Platform.Github;
 using DotnetKubernetesClient;
 using Infrastructure;
+using Infrastructure.Caching;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
@@ -10,26 +11,26 @@ using Octokit;
 using Team = v1.Platform.Github.Team;
 
 [EntityRbac(typeof(Team), Verbs = RbacVerb.All)]
-public class TeamController  :  IResourceController<Team>
+public class TeamController  :  ResourceController<Team>
 {
     private readonly GitHubClient _gitHubClient;
     private readonly IKubernetesClient _kubernetesClient;
     private readonly ILogger<TeamController> _logger;
 
     public TeamController(
+        ResourceCache resourceCache,
         GitHubClient gitHubClient,
         IKubernetesClient kubernetesClient,
-        ILogger<TeamController> logger)
+        ILogger<TeamController> logger
+        ) : base(resourceCache)
     {
         _gitHubClient = gitHubClient;
         _kubernetesClient = kubernetesClient;
         _logger = logger;
     }
 
-    public async Task<ResourceControllerResult?> ReconcileAsync(Team? entity)
+    protected override async Task<ResourceControllerResult?> InternalReconcileAsync(Team entity)
     {
-        if (entity == null) return null;
-
         var github = await _kubernetesClient.GetGithub(entity.Metadata.NamespaceProperty);
         var token = await _kubernetesClient.GetSecret(github.Metadata.NamespaceProperty, github.Spec.Credentials);
         if (!string.IsNullOrWhiteSpace(token)) _gitHubClient.Auth(token);
@@ -106,10 +107,8 @@ public class TeamController  :  IResourceController<Team>
 }
 
 
-    public async Task DeletedAsync(Team? entity)
+    protected override async Task InternalDeletedAsync(Team entity)
     {
-        if (entity == null) return;
-
         var github = await _kubernetesClient.GetGithub(entity.Metadata.NamespaceProperty);
         var token = await _kubernetesClient.GetSecret(github.Metadata.NamespaceProperty, github.Spec.Credentials);
         if(!string.IsNullOrWhiteSpace(token)) _gitHubClient.Auth(token);

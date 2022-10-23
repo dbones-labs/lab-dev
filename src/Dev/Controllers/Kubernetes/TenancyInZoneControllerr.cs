@@ -5,6 +5,7 @@ using DotnetKubernetesClient;
 using DotnetKubernetesClient.LabelSelectors;
 using Github.Internal;
 using Infrastructure;
+using Infrastructure.Caching;
 using k8s.Models;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
@@ -15,23 +16,23 @@ using v1.Platform.Rancher;
 using Cluster = Dev.v1.Components.Kubernetes.Kubernetes;
 
 [EntityRbac(typeof(TenancyInZone), Verbs = RbacVerb.All)]
-public class TenancyInZoneController : IResourceController<TenancyInZone>
+public class TenancyInZoneController : ResourceController<TenancyInZone>
 {
     private readonly IKubernetesClient _kubernetesClient;
     private readonly ILogger<TenancyInZoneController> _logger;
 
     public TenancyInZoneController(
+        ResourceCache resourceCache,
         IKubernetesClient kubernetesClient,
-        ILogger<TenancyInZoneController> logger)
+        ILogger<TenancyInZoneController> logger
+        ) : base(resourceCache)
     {
         _kubernetesClient = kubernetesClient;
         _logger = logger;
     }
 
-    public async Task<ResourceControllerResult?> ReconcileAsync(TenancyInZone? entity)
+    protected override async Task<ResourceControllerResult?> InternalReconcileAsync(TenancyInZone entity)
     {
-        if (entity == null) return null;
-     
         //setup project in the zone
         var zoneName = entity.Metadata.NamespaceProperty;
         var tenancyName = entity.Spec.Tenancy;
@@ -69,17 +70,11 @@ public class TenancyInZoneController : IResourceController<TenancyInZone>
             }, $@"{cluster.Metadata.Name}.{tenancyName}", zoneName);
         }
         
-        
-        
-        
-
         return null;
     }
     
-    public async Task DeletedAsync(TenancyInZone? entity)
+    protected override async Task InternalDeletedAsync(TenancyInZone entity)
     {
-        if (entity == null) return;
-
         var zoneName = entity.Metadata.NamespaceProperty;
         var tenancySelector = new EqualsSelector(Tenancy.TenancyLabel(), entity.Spec.Tenancy);
 

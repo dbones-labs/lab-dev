@@ -2,6 +2,7 @@
 
 using DotnetKubernetesClient;
 using Infrastructure;
+using Infrastructure.Caching;
 using Internal;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
@@ -11,24 +12,23 @@ using v1.Core.Tenancies;
 using v1.Platform.Github;
 
 [EntityRbac(typeof(Member), Verbs = RbacVerb.All)]
-public class MemberController : IResourceController<Member>
+public class MemberController : ResourceController<Member>
 {
     private readonly IKubernetesClient _kubernetesClient;
     private readonly ILogger<MemberController> _logger;
 
     public MemberController(
+        ResourceCache resourceCache,
         IKubernetesClient kubernetesClient,
         ILogger<MemberController> logger
-        )
+        ) : base(resourceCache)
     {
         _kubernetesClient = kubernetesClient;
         _logger = logger;
     }
 
-    public async Task<ResourceControllerResult?> ReconcileAsync(Member? entity)
+    protected override async Task<ResourceControllerResult?> InternalReconcileAsync(Member entity)
     {
-        if (entity == null) return null;
-
         var baseName = entity.Metadata.NamespaceProperty;
         var teamName = entity.Spec.Role == MemberRole.Guest
             ? Team.GetGuestTeamName(baseName)
@@ -55,10 +55,8 @@ public class MemberController : IResourceController<Member>
         return null;
     }
 
-    public async Task DeletedAsync(Member? entity)
+    protected override async Task InternalDeletedAsync(Member entity)
     {
-        if (entity == null) return;
-        
         var baseName = entity.Metadata.NamespaceProperty;
         var teamName = entity.Spec.Role == MemberRole.Guest
             ? Team.GetGuestTeamName(baseName)

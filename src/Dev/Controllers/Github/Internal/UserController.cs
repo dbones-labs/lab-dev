@@ -2,8 +2,7 @@
 
 using DotnetKubernetesClient;
 using Infrastructure;
-using k8s.Models;
-using KubeOps.Operator.Controller;
+using Infrastructure.Caching;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
 using Octokit;
@@ -11,25 +10,26 @@ using v1.Platform.Github;
 using User = v1.Platform.Github.User;
 
 [EntityRbac(typeof(User), Verbs = RbacVerb.All)]
-public class UserController  :  IResourceController<User>
+public class UserController : ResourceController<User>
 {
     private readonly IKubernetesClient _kubernetesClient;
     private readonly GitHubClient _gitHubClient;
     private readonly ILogger<UserController> _logger;
 
     public UserController(
+        ResourceCache resourceCache,
         IKubernetesClient kubernetesClient, 
         GitHubClient gitHubClient,
-        ILogger<UserController> logger)
+        ILogger<UserController> logger
+        ) : base(resourceCache)
     {
         _kubernetesClient = kubernetesClient;
         _gitHubClient = gitHubClient;
         _logger = logger;
     }
     
-    public async Task<ResourceControllerResult?> ReconcileAsync(User? entity)
+    protected override async Task<ResourceControllerResult?> InternalReconcileAsync(User entity)
     {
-        if (entity == null) return null;
         if (entity.Status.OrganisationStatus == OrganisationStatus.Member)
         {
             var login2 = entity.Spec.Login;
@@ -86,10 +86,8 @@ public class UserController  :  IResourceController<User>
         return null;
     }
     
-    public async Task DeletedAsync(User? entity)
+    protected override async Task InternalDeletedAsync(User entity)
     {
-        if (entity == null) return;
-        
         var github = await _kubernetesClient.GetGithub(entity.Metadata.NamespaceProperty);
         var token = await _kubernetesClient.GetSecret(github.Metadata.NamespaceProperty, github.Spec.Credentials);
         if(!string.IsNullOrWhiteSpace(token)) _gitHubClient.Auth(token);

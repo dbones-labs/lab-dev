@@ -3,6 +3,8 @@
 using Dev.v1.Core;
 using Dev.v1.Platform.Rancher;
 using DotnetKubernetesClient;
+using Infrastructure;
+using Infrastructure.Caching;
 using Infrastructure.Git;
 using Infrastructure.Templates;
 using KubeOps.Operator.Controller;
@@ -10,18 +12,20 @@ using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
 
 [EntityRbac(typeof(Rancher), Verbs = RbacVerb.All)]
-public class RancherController : IResourceController<Rancher>
+public class RancherController : ResourceController<Rancher>
 {
     private readonly IKubernetesClient _kubernetesClient;
     private readonly GitService _gitService;
     private readonly Templating _templating;
     private readonly ILogger<RancherController> _logger;
 
-    public RancherController( 
+    public RancherController(
+        ResourceCache resourceCache,
         IKubernetesClient kubernetesClient,
         GitService gitService,
         Templating templating,
-        ILogger<RancherController> logger)
+        ILogger<RancherController> logger
+        ) : base(resourceCache)
     {
         _kubernetesClient = kubernetesClient;
         _gitService = gitService;
@@ -29,7 +33,7 @@ public class RancherController : IResourceController<Rancher>
         _logger = logger;
     }
 
-    public async Task<ResourceControllerResult?> ReconcileAsync(Rancher? entity)
+    protected override async Task<ResourceControllerResult?> InternalReconcileAsync(Rancher entity)
     {
         var orgs = await _kubernetesClient.List<Organization>(entity.Metadata.NamespaceProperty);
         var org = orgs.FirstOrDefault();
