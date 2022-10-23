@@ -6,11 +6,11 @@ using KubeOps.Operator.Entities.Annotations;
 
 [IgnoreEntity]
 [KubernetesEntity(Group = "management.cattle.io", ApiVersion = "v3")]
-public class GlobalRole : CustomKubernetesEntity
+public class Globalrole : CustomKubernetesEntity
 {
-    public static GlobalRole Init(string name,string creator)
+    public static Globalrole Init(string name,string creator)
     {
-        return new GlobalRole()
+        return new Globalrole()
         {
             Metadata = new V1ObjectMeta()
             {
