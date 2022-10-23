@@ -1,4 +1,4 @@
-﻿namespace Dev.Controllers.Rancher.Git;
+﻿namespace Dev.Infrastructure.Templates;
 
 using System.Collections.Concurrent;
 using Scriban;

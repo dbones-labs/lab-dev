@@ -2,6 +2,7 @@
 
 using DotnetKubernetesClient;
 using DotnetKubernetesClient.LabelSelectors;
+using Infrastructure;
 using Internal;
 using k8s.Models;
 using KubeOps.Operator.Controller;

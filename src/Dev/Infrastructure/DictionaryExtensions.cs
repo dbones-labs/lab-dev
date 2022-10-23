@@ -1,4 +1,4 @@
-﻿namespace Dev.Controllers.Github.Internal;
+﻿namespace Dev.Infrastructure;
 
 public static class DictionaryExtensions
 {

@@ -1,6 +1,7 @@
 ﻿namespace Dev.Controllers.Github;
 
 using DotnetKubernetesClient;
+using Infrastructure;
 using Internal;
 using k8s.Models;
 using KubeOps.Operator.Controller;

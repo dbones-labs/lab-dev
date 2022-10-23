@@ -2,6 +2,7 @@
 
 using Dev.v1.Platform.Github;
 using DotnetKubernetesClient;
+using Infrastructure;
 using k8s.Models;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;

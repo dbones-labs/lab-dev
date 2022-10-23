@@ -1,6 +1,6 @@
-﻿namespace Dev.Controllers.Rancher.Git;
+﻿namespace Dev.Infrastructure.Git;
 
-using v1.Platform.Github;
+using Dev.v1.Platform.Github;
 
 internal record GitContext(
     Github Github, 

@@ -1,4 +1,4 @@
-﻿namespace Dev.Controllers.Github.Internal;
+﻿namespace Dev.Infrastructure;
 
 [Obsolete("need to refactor", false)]
 public static class Collab

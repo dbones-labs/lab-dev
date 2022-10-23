@@ -1,4 +1,4 @@
-﻿namespace Dev.Controllers.Rancher.Git;
+﻿namespace Dev.Infrastructure;
 
 using System.Reflection;
 using System.Security.Cryptography;

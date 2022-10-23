@@ -4,6 +4,8 @@ using Dev.Controllers.Rancher.Git;
 using Dev.v1.Core;
 using Dev.v1.Core.Services;
 using DotnetKubernetesClient;
+using Infrastructure.Git;
+using Infrastructure.Templates;
 using k8s.Models;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
