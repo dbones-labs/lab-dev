@@ -1,6 +1,7 @@
 ﻿namespace Dev.Controllers.Github.Internal;
 
 using DotnetKubernetesClient;
+using k8s.Models;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
@@ -28,7 +29,14 @@ public class UserController  :  IResourceController<User>
     public async Task<ResourceControllerResult?> ReconcileAsync(User? entity)
     {
         if (entity == null) return null;
-        if (entity.Status.OrganisationStatus == OrganisationStatus.Member) return null;
+        if (entity.Status.OrganisationStatus == OrganisationStatus.Member)
+        {
+            var login2 = entity.Spec.Login;
+            var githubUser2 = await _gitHubClient.User.Get(login2);
+            entity.Metadata.Labels.Update(User.IdLabel(), githubUser2.Id.ToString());
+            await _kubernetesClient.Update(entity);
+            return null;
+        }
         
         var github = await _kubernetesClient.GetGithub(entity.Metadata.NamespaceProperty);
         var token = await _kubernetesClient.GetSecret(github.Metadata.NamespaceProperty, github.Spec.Credentials);
@@ -43,8 +51,11 @@ public class UserController  :  IResourceController<User>
 
             _logger.LogInformation("account: {name} - setup complete", entity.Metadata.Name);
             entity.Status.GithubId = githubUser.Id.ToString();
-            await _kubernetesClient.UpdateStatus(entity);
+            entity.Metadata.Labels.Update(User.IdLabel(), githubUser.Id.ToString());
+            await _kubernetesClient.Update(entity);
+            //await _kubernetesClient.UpdateStatus(entity);
         }
+       
         
         //confirm the invite state
         var isMember = await _gitHubClient.Organization.Member.CheckMember(

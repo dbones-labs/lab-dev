@@ -4,16 +4,14 @@ using DotnetKubernetesClient;
 using DotnetKubernetesClient.LabelSelectors;
 using Github.Internal;
 using k8s.Models;
-using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
-using KubeOps.Operator.Rbac;
 using v1.Core;
 using v1.Platform.Rancher;
 using v1.Platform.Rancher.External;
 using User = v1.Platform.Rancher.User;
 
-[EntityRbac(typeof(UserAttribute), Verbs = RbacVerb.All)]
-public class UserAttributeController : IResourceController<UserAttribute>
+//[EntityRbac(typeof(UserAttribute), Verbs = RbacVerb.All)]
+public class UserAttributeController //: IResourceController<UserAttribute>
 {
     private readonly IKubernetesClient _kubernetesClient;
     private readonly ILogger<UserAttributeController> _logger;
@@ -31,22 +29,21 @@ public class UserAttributeController : IResourceController<UserAttribute>
     {
         if (entity == null) return null;
         
-        var orgs = await _kubernetesClient.List<Organization>(entity.Metadata.NamespaceProperty);
-        var org = orgs.FirstOrDefault();
-        if (org == null) throw new Exception("please ensure you add an Organisation");
-        var orgNs = org.Metadata.NamespaceProperty;
+
+        var org = await _kubernetesClient.GetOrganization();
+        var orgNs = org.Namespace();
 
         //as Rancher ports users in via Github, we use this as the glue to map it back to our Account
-        if (
-            entity.ExtraByProvider == null 
-            || !entity.ExtraByProvider.TryGetValue("github", out var principal) 
-            || principal == null)
+        if ( entity.ExtraByProvider?.Github == null)
+            //entity.extraByProvider == null 
+            //|| !entity.extraByProvider.TryGetValue("Github", out var principal) 
+            //|| principal == null)
         {
             _logger.LogWarning("user {Name} has not Github account", entity.Name());
             return null;
         }
         
-        var githubLoginSelector = new EqualsSelector(v1.Platform.Github.User.LoginLabel(), principal.Username);
+        var githubLoginSelector = new EqualsSelector(v1.Platform.Github.User.LoginLabel(), entity.ExtraByProvider.Github.Username);
         var githubLogins = await _kubernetesClient.List<v1.Platform.Github.User>(orgNs, githubLoginSelector);
         var githubLogin = githubLogins.FirstOrDefault();
         if (githubLogin == null)

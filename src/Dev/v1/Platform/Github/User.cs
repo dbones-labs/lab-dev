@@ -9,6 +9,7 @@ public class User : CustomKubernetesEntity<UserSpec, UserStatus>
 {
     public static string AccountLabel() => "lab.dev/account"; 
     public static string LoginLabel() => "github.lab.dev/login";
+    public static string IdLabel() => "github.lab.dev/user-id";
 }
 
 public class UserSpec

@@ -296,15 +296,34 @@ public class RancherController : IResourceController<Rancher>
                         "clusters",
                         "clustergroups",
                         "contents",
-                        "fleetworkspaces",
-                        "gitjobs",
                         "gitrepos",
                         "gitreporestrictions"
+                    }
+                },
+                new V1PolicyRule()
+                {
+                    ApiGroups = new List<string>() { "gitjob.cattle.io" },
+                    Verbs = new List<string>() { "get", "list", "watch" },
+                    Resources = new List<string>()
+                    {
+                        "gitjobs"
+                    }
+                },
+                new V1PolicyRule()
+                {
+                    ApiGroups = new List<string>() { "management.cattle.io" },
+                    Verbs = new List<string>() { "get", "list", "watch" },
+                    Resources = new List<string>()
+                    {
+                        "fleetworkspaces"
                     }
                 }
             };
             return role;
         }, "lab-view-fleet", "default");
+        
+        
+        
         
         
         return null;
