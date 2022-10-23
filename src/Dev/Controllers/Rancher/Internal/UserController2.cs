@@ -41,6 +41,13 @@ public class UserController : IResourceController<User>
             return null;
         }
 
+        var rancher = await _kubernetesClient.Get<Rancher>("rancher", orgNs);
+        if (rancher.Spec.TechnicalUser == entity.Name())
+        {
+            //we do not link the tech user.
+            return null;
+        }
+
         var githubId = githubIdEntry.Replace("github_user://", "");
 
         var users = await _kubernetesClient.List<v1.Platform.Github.User>(orgNs,
@@ -48,7 +55,7 @@ public class UserController : IResourceController<User>
         var user = users.FirstOrDefault();
         if (user == null)
         {
-            throw new Exception($"github user does not exist yet for {entity.DisplayName} - {entity.Name()}");
+            throw new Exception($"github user does not exist yet for {entity.DisplayName} - {entity.Name()} - {githubIdEntry}");
         }
 
         
