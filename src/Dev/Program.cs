@@ -1,5 +1,7 @@
 using Dev.Controllers.Rancher.Git;
 using Dev.Infrastructure.Caching;
+using Dev.Infrastructure.Git;
+using Dev.Infrastructure.Templates;
 using DotnetKubernetesClient;
 using k8s;
 using KubeOps.Operator;

@@ -1,14 +1,14 @@
-﻿namespace Dev.Controllers.Github.Internal;
+﻿namespace Dev.Infrastructure;
 
 using System.Text;
+using Dev.v1.Core;
+using Dev.v1.Platform.Github;
 using DotnetKubernetesClient;
 using DotnetKubernetesClient.LabelSelectors;
 using k8s;
 using k8s.Models;
 using Marvin.JsonPatch;
 using Newtonsoft.Json;
-using v1.Core;
-using v1.Platform.Github;
 
 public static class KubernetesClientExtensions
 {

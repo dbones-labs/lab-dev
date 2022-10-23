@@ -1,8 +1,7 @@
-﻿namespace Dev.Controllers.Rancher.Git;
+﻿namespace Dev.Infrastructure.Git;
 
+using Dev.v1.Platform.Github;
 using DotnetKubernetesClient;
-using Github.Internal;
-using v1.Platform.Github;
 
 public class GitService
 {

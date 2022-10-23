@@ -1,8 +1,7 @@
-﻿namespace Dev.Controllers.Rancher.Git;
+﻿namespace Dev.Infrastructure.Git;
 
 using k8s.Models;
 using LibGit2Sharp;
-using LibGit2Sharp.Handlers;
 
 public class GitScope : IDisposable
 {

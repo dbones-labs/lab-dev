@@ -3,6 +3,7 @@
 using DotnetKubernetesClient;
 using DotnetKubernetesClient.LabelSelectors;
 using Github.Internal;
+using Infrastructure;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;

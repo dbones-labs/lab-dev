@@ -3,6 +3,8 @@
 using Dev.v1.Core;
 using Dev.v1.Platform.Rancher;
 using DotnetKubernetesClient;
+using Infrastructure.Git;
+using Infrastructure.Templates;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
