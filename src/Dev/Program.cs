@@ -1,4 +1,5 @@
 using Dev.Controllers.Rancher.Git;
+using Dev.Infrastructure.Caching;
 using DotnetKubernetesClient;
 using k8s;
 using KubeOps.Operator;
@@ -23,6 +24,7 @@ builder.Services.AddTransient<GitHubClient>(_ => new GitHubClient(new ProductHea
 builder.Services.AddTransient<IGitHubClient>(provider => provider.GetRequiredService<GitHubClient>());
 builder.Services.AddSingleton<GitService>();
 builder.Services.AddSingleton<Templating>();
+builder.Services.AddSingleton<ICache, InMemoryCache>();
 
 var app = builder.Build();
 app.UseKubernetesOperator();
