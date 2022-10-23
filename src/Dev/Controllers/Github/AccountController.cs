@@ -2,6 +2,7 @@
 
 using DotnetKubernetesClient;
 using Infrastructure;
+using Infrastructure.Caching;
 using Internal;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
@@ -11,23 +12,23 @@ using Account = v1.Core.Account;
 using User = v1.Platform.Github.User;
 
 [EntityRbac(typeof(Account), Verbs = RbacVerb.All)]
-public class AccountController : IResourceController<Account>
+public class AccountController : ResourceController<Account>
 {
     private readonly IKubernetesClient _kubernetesClient;
     private readonly ILogger<AccountController> _logger;
 
     public AccountController(
+        ResourceCache resourceCache,
         IKubernetesClient kubernetesClient,
-        ILogger<AccountController> logger)
+        ILogger<AccountController> logger
+        ) : base(resourceCache)
     {
         _kubernetesClient = kubernetesClient;
         _logger = logger;
     }
     
-    public async Task<ResourceControllerResult?> ReconcileAsync(Account? entity)
+    protected override async Task<ResourceControllerResult?> InternalReconcileAsync(Account entity)
     {
-        if (entity == null) return null;
-        
         //lets confirm if we have the github login
         var login = entity.Spec.ExternalAccounts.FirstOrDefault(x => x.Provider == "github")?.Id;
         if (login == null) throw new Exception($"we require a github login for {entity.Metadata.Name}");
@@ -71,8 +72,6 @@ public class AccountController : IResourceController<Account>
         var github = await _kubernetesClient.GetGithub(entity.Metadata.NamespaceProperty);
         
         
-        
-        
         var member = await _kubernetesClient.Get<TeamMember>(name, @namespace);
         if (member == null)
         {
@@ -98,10 +97,8 @@ public class AccountController : IResourceController<Account>
         return null;
     }
     
-    public async Task DeletedAsync(Account? entity)
+    protected override async Task InternalDeletedAsync(Account entity)
     {
-        if (entity == null) return;
-        
         var name = entity.Metadata.Name;
         var @namespace = entity.Metadata.NamespaceProperty;
 

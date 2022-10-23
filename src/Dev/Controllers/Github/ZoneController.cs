@@ -3,9 +3,8 @@
 using DotnetKubernetesClient;
 using DotnetKubernetesClient.LabelSelectors;
 using Infrastructure;
-using Internal;
+using Infrastructure.Caching;
 using k8s.Models;
-using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
 using v1.Core;
@@ -13,24 +12,23 @@ using v1.Core.Services;
 using v1.Platform.Github;
 
 [EntityRbac(typeof(Zone), Verbs = RbacVerb.All)]
-public class ZoneController : IResourceController<Zone>
+public class ZoneController : ResourceController<Zone>
 {
     private readonly IKubernetesClient _kubernetesClient;
     private readonly ILogger<ZoneController> _logger;
 
     public ZoneController(
+        ResourceCache resourceCache,
         IKubernetesClient kubernetesClient,
         ILogger<ZoneController> logger
-    )
+    ) : base(resourceCache)
     {
         _kubernetesClient = kubernetesClient;
         _logger = logger;
     }
 
-    public async Task<ResourceControllerResult?> ReconcileAsync(Zone? entity)
+    protected override async Task<ResourceControllerResult?> InternalReconcileAsync(Zone entity)
     {
-        if (entity == null) return null;
-
         var organisation = entity.Metadata.NamespaceProperty;
         var zoneName = entity.Metadata.Name;
         
@@ -111,10 +109,9 @@ public class ZoneController : IResourceController<Zone>
     }
 
 
-    public async Task DeletedAsync(Zone? entity)
+    protected override async Task InternalDeletedAsync(Zone entity)
     {
-        if (entity == null) return;
-        var zoneName = entity.Metadata.Name;
+        var zoneName = entity.Name();
         
         var collabs = await _kubernetesClient.List<Collaborator>(zoneName);
         await _kubernetesClient.Delete(collabs);

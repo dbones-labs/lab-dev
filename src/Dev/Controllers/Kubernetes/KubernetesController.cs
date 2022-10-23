@@ -3,6 +3,7 @@
 using DotnetKubernetesClient;
 using Github.Internal;
 using Infrastructure;
+using Infrastructure.Caching;
 using k8s.Models;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
@@ -14,23 +15,23 @@ using RancherCluster = v1.Platform.Rancher.External.Cluster;
 using FleetCluster = v1.Platform.Rancher.External.Fleet.Cluster;
 
 [EntityRbac(typeof(Cluster), Verbs = RbacVerb.All)]
-public class KubernetesController : IResourceController<Cluster>
+public class KubernetesController : ResourceController<Cluster>
 {
     private readonly IKubernetesClient _kubernetesClient;
     private readonly ILogger<KubernetesController> _logger;
 
-    public KubernetesController(        
+    public KubernetesController(
+        ResourceCache resourceCache,
         IKubernetesClient kubernetesClient,
-        ILogger<KubernetesController> logger)
+        ILogger<KubernetesController> logger
+        ) : base(resourceCache)
     {
         _kubernetesClient = kubernetesClient;
         _logger = logger;
     }
     
-    public async Task<ResourceControllerResult?> ReconcileAsync(Cluster? entity)
+    protected override async Task<ResourceControllerResult?> InternalReconcileAsync(Cluster entity)
     {
-        if (entity == null) return null;
-
         var fleetNamespace = entity.Name() == "local" ? "fleet-local" : "fleet-default";
         var clusterName = entity.Metadata.Name;
         var zoneName = entity.Metadata.NamespaceProperty;

@@ -27,6 +27,7 @@ builder.Services.AddTransient<IGitHubClient>(provider => provider.GetRequiredSer
 builder.Services.AddSingleton<GitService>();
 builder.Services.AddSingleton<Templating>();
 builder.Services.AddSingleton<ICache, InMemoryCache>();
+builder.Services.AddSingleton<ResourceCache>();
 
 var app = builder.Build();
 app.UseKubernetesOperator();

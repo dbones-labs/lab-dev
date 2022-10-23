@@ -2,7 +2,6 @@
 
 using DotnetKubernetesClient;
 using DotnetKubernetesClient.LabelSelectors;
-using Github.Internal;
 using Infrastructure;
 using k8s.Models;
 using KubeOps.Operator.Controller;

@@ -3,10 +3,9 @@
 using v1.Core;
 using DotnetKubernetesClient;
 using DotnetKubernetesClient.LabelSelectors;
-using Github.Internal;
 using Infrastructure;
+using Infrastructure.Caching;
 using k8s.Models;
-using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
 using v1.Core.Services;
@@ -16,24 +15,23 @@ using v1.Platform.Rancher.External.Fleet;
 /// figures up the tenancies across the zones (which zone components will act on)
 /// </summary>
 [EntityRbac(typeof(Tenancy), Verbs = RbacVerb.All)]
-public class TenancyController : IResourceController<Tenancy>
+public class TenancyController : ResourceController<Tenancy>
 {
     private readonly IKubernetesClient _kubernetesClient;
     private readonly ILogger<TenancyController> _logger;
 
     public TenancyController(
+        ResourceCache resourceCache,
         IKubernetesClient kubernetesClient,
         ILogger<TenancyController> logger
-        )
+        ) : base(resourceCache)
     {
         _kubernetesClient = kubernetesClient;
         _logger = logger;
     }
 
-    public async Task<ResourceControllerResult?> ReconcileAsync(Tenancy? entity)
+    protected override async Task<ResourceControllerResult?> InternalReconcileAsync(Tenancy entity)
     {
-        if (entity == null) return null;
-
         var contextName = TenancyContext.GetName();
         var @namespace = entity.Metadata.Name; 
         
@@ -170,10 +168,8 @@ public class TenancyController : IResourceController<Tenancy>
     }
 
 
-    public async Task DeletedAsync(Tenancy? entity)
+    protected override async Task InternalDeletedAsync(Tenancy entity)
     {
-        if (entity == null) return;
-        
         var contextName = TenancyContext.GetName();
         var @namespace = entity.Metadata.Name;
 

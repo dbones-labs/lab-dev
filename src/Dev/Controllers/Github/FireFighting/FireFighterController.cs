@@ -2,7 +2,6 @@
 
 using DotnetKubernetesClient;
 using Infrastructure;
-using Internal;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;

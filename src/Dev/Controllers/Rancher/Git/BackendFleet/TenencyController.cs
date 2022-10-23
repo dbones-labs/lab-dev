@@ -2,6 +2,8 @@
 
 using Dev.v1.Core;
 using DotnetKubernetesClient;
+using Infrastructure;
+using Infrastructure.Caching;
 using Infrastructure.Git;
 using Infrastructure.Templates;
 using k8s.Models;
@@ -13,7 +15,7 @@ using KubeOps.Operator.Rbac;
 /// figures up the tenancies across the zones (which zone components will act on)
 /// </summary>
 [EntityRbac(typeof(Tenancy), Verbs = RbacVerb.All)]
-public class TenancyController : IResourceController<Tenancy>
+public class TenancyController : ResourceController<Tenancy>
 {
     private readonly IKubernetesClient _kubernetesClient;
     private readonly GitService _gitService;
@@ -21,11 +23,12 @@ public class TenancyController : IResourceController<Tenancy>
     private readonly ILogger<TenancyController> _logger;
 
     public TenancyController(
+        ResourceCache resourceCache,
         IKubernetesClient kubernetesClient,
         GitService gitService,
         Templating templating,
         ILogger<TenancyController> logger
-        )
+        ) : base(resourceCache)
     {
         _kubernetesClient = kubernetesClient;
         _gitService = gitService;
@@ -33,10 +36,8 @@ public class TenancyController : IResourceController<Tenancy>
         _logger = logger;
     }
 
-    public async Task<ResourceControllerResult?> ReconcileAsync(Tenancy? entity)
+    protected override async Task<ResourceControllerResult?> InternalReconcileAsync(Tenancy entity)
     {
-        if (entity == null) return null;
-        
         var orgs = await _kubernetesClient.List<Organization>(entity.Metadata.NamespaceProperty);
         var org = orgs.FirstOrDefault();
         if (org == null) throw new Exception("please ensure you add an Organisation");
@@ -68,12 +69,10 @@ public class TenancyController : IResourceController<Tenancy>
         
         return null;
     }
-
-
-    public async Task DeletedAsync(Tenancy? entity)
+    
+    
+    protected override async Task InternalDeletedAsync(Tenancy entity)
     {
-        if (entity == null) return;
-        
         var orgs = await _kubernetesClient.List<Organization>(entity.Metadata.NamespaceProperty);
         var org = orgs.FirstOrDefault();
         if (org == null) throw new Exception("please ensure you add an Organisation");

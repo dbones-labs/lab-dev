@@ -6,7 +6,7 @@ using KubeOps.Operator.Rbac;
 using v1.Core;
 
 [EntityRbac(typeof(Account), Verbs = RbacVerb.All)]
-public class AccountController : IResourceController<Account>
+public class AccountController //: IResourceController<Account>
 {
     private readonly ILogger<AccountController> _logger;
 

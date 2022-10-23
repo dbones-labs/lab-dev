@@ -4,6 +4,8 @@ using Dev.Controllers.Rancher.Git;
 using Dev.v1.Core;
 using Dev.v1.Core.Services;
 using DotnetKubernetesClient;
+using Infrastructure;
+using Infrastructure.Caching;
 using Infrastructure.Git;
 using Infrastructure.Templates;
 using k8s.Models;
@@ -16,19 +18,20 @@ using TenancyDefaults;
 /// figures up the tenancies across the zones (which zone components will act on)
 /// </summary>
 [EntityRbac(typeof(Zone), Verbs = RbacVerb.All)]
-public class ZoneController : IResourceController<Zone>
+public class ZoneController : ResourceController<Zone>
 {
     private readonly IKubernetesClient _kubernetesClient;
     private readonly GitService _gitService;
     private readonly Templating _templating;
-    private readonly ILogger<TenancyController> _logger;
+    private readonly ILogger<ZoneController> _logger;
 
     public ZoneController(
+        ResourceCache resourceCache,
         IKubernetesClient kubernetesClient,
         GitService gitService,
         Templating templating,
-        ILogger<TenancyController> logger
-        )
+        ILogger<ZoneController> logger
+        ) : base(resourceCache)
     {
         _kubernetesClient = kubernetesClient;
         _gitService = gitService;
@@ -36,13 +39,11 @@ public class ZoneController : IResourceController<Zone>
         _logger = logger;
     }
 
-    public async Task<ResourceControllerResult?> ReconcileAsync(Zone? entity)
+    protected override async Task<ResourceControllerResult?> InternalReconcileAsync(Zone entity)
     {
-        if (entity == null) return null;
         if (entity.Name() == "control") return null;
 
-
-            var orgs = await _kubernetesClient.List<Organization>(entity.Metadata.NamespaceProperty);
+        var orgs = await _kubernetesClient.List<Organization>(entity.Metadata.NamespaceProperty);
         var org = orgs.FirstOrDefault();
         if (org == null) throw new Exception("please ensure you add an Organisation");
         

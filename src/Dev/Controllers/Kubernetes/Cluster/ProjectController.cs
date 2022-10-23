@@ -4,6 +4,8 @@ using DotnetKubernetesClient;
 using DotnetKubernetesClient.LabelSelectors;
 using Github.Internal;
 using Infrastructure;
+using Infrastructure.Caching;
+using k8s.Models;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
@@ -17,25 +19,24 @@ using Project = v1.Platform.Rancher.Project;
 using RancherProject = v1.Platform.Rancher.External.Project;
 
 [EntityRbac(typeof(Project), Verbs = RbacVerb.All)]
-public class ProjectController : IResourceController<Project>
+public class ProjectController : ResourceController<Project>
 {
     private readonly IKubernetesClient _kubernetesClient;
     private readonly ILogger<ProjectController> _logger;
 
     public ProjectController(
+        ResourceCache resourceCache,
         IKubernetesClient kubernetesClient,
         ILogger<ProjectController> logger
-    )
+    ) : base(resourceCache)
     {
         _kubernetesClient = kubernetesClient;
         _logger = logger;
     }
 
-    public async Task<ResourceControllerResult?> ReconcileAsync(Project? entity)
+    protected override async Task<ResourceControllerResult?> InternalReconcileAsync(Project entity)
     {
-        if (entity == null) return null;
-
-        var zoneName = entity.Metadata.NamespaceProperty;
+        var zoneName = entity.Namespace();
 
         var context = await _kubernetesClient.Get<TenancyContext>(TenancyContext.GetName(), zoneName);
         if (context == null) throw new Exception($"cannot find tenancy context for {zoneName}");
@@ -163,9 +164,8 @@ public class ProjectController : IResourceController<Project>
         return null;
     }
 
-    public async Task DeletedAsync(Project? entity)
+    protected override async Task InternalDeletedAsync(Project entity)
     {
-        if (entity == null) return;
         var zoneName = entity.Metadata.NamespaceProperty;
 
         var cluster = await _kubernetesClient.Get<Kubernetes>(entity.Spec.Kubernetes, zoneName);

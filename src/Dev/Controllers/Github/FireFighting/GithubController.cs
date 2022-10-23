@@ -39,7 +39,7 @@ public class GithubController : IResourceController<Github>
         var recently = new IssueRequest
         {
             Filter = IssueFilter.All,
-            State = ItemStateFilter.All,
+            State = ItemStateFilter.Open,
             SortDirection = SortDirection.Descending,
             Labels = { FireFighter.Requested(), FireFighter.Approved(), FireFighter.Activated() }
         };

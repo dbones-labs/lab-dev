@@ -2,6 +2,7 @@
 
 using DotnetKubernetesClient;
 using Infrastructure;
+using Infrastructure.Caching;
 using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
@@ -10,26 +11,26 @@ using v1.Platform.Github;
 using Team = v1.Platform.Github.Team;
 
 [EntityRbac(typeof(Collaborator), Verbs = RbacVerb.All)]
-public class CollaboratorController  : IResourceController<Collaborator>
+public class CollaboratorController : ResourceController<Collaborator>
 {
     private readonly IKubernetesClient _kubernetesClient;
     private readonly GitHubClient _gitHubClient;
     private readonly ILogger<CollaboratorController> _logger;
 
     public CollaboratorController(
+        ResourceCache resourceCache,
         IKubernetesClient kubernetesClient,
         GitHubClient gitHubClient,
-        ILogger<CollaboratorController> logger)
+        ILogger<CollaboratorController> logger
+        ) : base(resourceCache)
     {
         _kubernetesClient = kubernetesClient;
         _gitHubClient = gitHubClient;
         _logger = logger;
     }
 
-    public async Task<ResourceControllerResult?> ReconcileAsync(Collaborator? entity)
+    protected override async Task<ResourceControllerResult?> InternalReconcileAsync(Collaborator entity)
     {
-        if (entity == null) return null;
-
         var github = await _kubernetesClient.GetGithub(entity.Spec.OrganizationNamespace);
         var token = await _kubernetesClient.GetSecret(github.Metadata.NamespaceProperty, github.Spec.Credentials);
         if(!string.IsNullOrWhiteSpace(token)) _gitHubClient.Auth(token);
@@ -77,10 +78,8 @@ public class CollaboratorController  : IResourceController<Collaborator>
         return null;
     }
 
-    public async Task DeletedAsync(Collaborator? entity)
+    protected override async Task InternalDeletedAsync(Collaborator entity)
     {
-        if (entity == null) return;
-
         var github = await _kubernetesClient.GetGithub(entity.Spec.OrganizationNamespace);
         var token = await _kubernetesClient.GetSecret(github.Metadata.NamespaceProperty, github.Spec.Credentials);
         if(!string.IsNullOrWhiteSpace(token)) _gitHubClient.Auth(token);

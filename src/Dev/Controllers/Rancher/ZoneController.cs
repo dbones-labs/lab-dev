@@ -1,10 +1,9 @@
 ﻿namespace Dev.Controllers.Rancher;
 
 using DotnetKubernetesClient;
-using Github.Internal;
 using Infrastructure;
+using Infrastructure.Caching;
 using k8s.Models;
-using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
 using v1.Core;
@@ -15,24 +14,23 @@ using v1.Platform.Rancher.External.Fleet;
 /// sets up the zone area, which will be acted upon by zone level components (kubernetes, postgres, rabbit etc)
 /// </summary>
 [EntityRbac(typeof(Zone), Verbs = RbacVerb.All)]
-public class ZoneController : IResourceController<Zone>
+public class ZoneController : ResourceController<Zone>
 {
     private readonly IKubernetesClient _kubernetesClient;
     private readonly ILogger<ZoneController> _logger;
 
     public ZoneController(
+        ResourceCache resourceCache,
         IKubernetesClient kubernetesClient,
         ILogger<ZoneController> logger
-    )
+    ) : base(resourceCache)
     {
         _kubernetesClient = kubernetesClient;
         _logger = logger;
     }
 
-    public async Task<ResourceControllerResult?> ReconcileAsync(Zone? entity)
+    protected override async Task<ResourceControllerResult?> InternalReconcileAsync(Zone entity)
     {
-        if (entity == null) return null;
-
         var environments = await _kubernetesClient.List<Environment>(entity.Metadata.NamespaceProperty);
         var env = environments.FirstOrDefault(x => x.Metadata.Name == entity.Spec.Environment);
         if (env == null) throw new Exception($"cannot find environment {entity.Spec.Environment}");
@@ -145,10 +143,8 @@ public class ZoneController : IResourceController<Zone>
         return null;
     }
 
-    public async Task DeletedAsync(Zone? entity)
+    protected override async Task InternalDeletedAsync(Zone entity)
     {
-        if (entity == null) return;
-
         var local = "fleet-local";
         var @default = "fleet-default";       
         
