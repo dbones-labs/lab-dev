@@ -5,7 +5,7 @@ using KubeOps.Operator.Entities;
 using KubeOps.Operator.Entities.Annotations;
 
 [IgnoreEntity]
-[KubernetesEntity(Group = "management.cattle.io", ApiVersion = "v3")]
+[KubernetesEntity(Group = "management.cattle.io", ApiVersion = "v3", PluralName = "globalrolebindings")]
 public class GlobalRoleBinding : CustomKubernetesEntity
 {
     public static GlobalRoleBinding InitGroup(
@@ -33,7 +33,7 @@ public class GlobalRoleBinding : CustomKubernetesEntity
                 {
                     "controller.cattle.io/mgmt-auth-grb-controller"
                 },
-                GenerateName = "grb-",
+                //GenerateName = "grb-",
                 OwnerReferences = new List<V1OwnerReference>
                 {
                    new()
