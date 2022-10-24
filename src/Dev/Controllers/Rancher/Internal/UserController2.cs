@@ -2,17 +2,12 @@
 
 using DotnetKubernetesClient;
 using DotnetKubernetesClient.LabelSelectors;
-using Github.Internal;
 using Infrastructure;
 using Infrastructure.Caching;
 using k8s.Models;
-using KubeOps.Operator.Controller;
 using KubeOps.Operator.Controller.Results;
 using KubeOps.Operator.Rbac;
-using Octokit;
-using v1.Core;
 using v1.Platform.Rancher;
-using v1.Platform.Rancher.External;
 using User = v1.Platform.Rancher.External.User;
 using InternalUser = Dev.v1.Platform.Rancher.User;
 

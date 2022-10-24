@@ -322,10 +322,42 @@ public class RancherController : IResourceController<Rancher>
             };
             return role;
         }, "lab-view-fleet");
+
+
+        var defaultRole = await _kubernetesClient.Get<GlobalRole>(entity.Spec.GlobalDefaultRole);
+        if (!defaultRole.NewUserDefault)
+        {
+            var initialRole = await _kubernetesClient.Get<GlobalRole>("user");
+            initialRole.NewUserDefault = false;
+            await _kubernetesClient.Update(initialRole);
+            
+            defaultRole.NewUserDefault = true;
+            await _kubernetesClient.Update(defaultRole);
+        }
         
-        
-        
-        
+        //rancher is dependant on github, for its RBAC
+        var team = await _kubernetesClient.Get<Team>(github.Spec.GlobalTeam, entity.Namespace());
+        if (team == null) throw new Exception($"cannot find github team for {github.Spec.GlobalTeam}");
+        if (!team.Status.Id.HasValue) throw new Exception($"github team is not synced (yet) - {github.Spec.GlobalTeam}");
+
+        foreach (var globalRole in entity.Spec.GlobalOrganizationRole.Split(",").Select(x=>x.Trim()))
+        {
+            var name = $"{team.Name()}-{globalRole}";
+            
+            //todo: make updateable
+            await _kubernetesClient.Ensure(() =>
+            {
+                var binding = GlobalRoleBinding.InitGroup(
+                    entity.Spec.TechnicalUser,
+                    team.Name(),
+                    team.Status.Id.Value,
+                    globalRole,
+                    globalRole
+                );
+                binding.Metadata.Name = name;
+                return binding;
+            }, name, "default");
+        }
         
         return null;
     }

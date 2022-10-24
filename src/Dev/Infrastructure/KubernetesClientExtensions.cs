@@ -98,6 +98,28 @@ public static class KubernetesClientExtensions
             entity.Metadata.NamespaceProperty ?? "default",
             crdMeta.PluralName,
             entity.Metadata.Name);
+    }
+    
+    public static async Task PatchCrd<T>(this IKubernetesClient client, T entity, Action<JsonPatchDocument<T>> patchToApply) where T: class, IKubernetesObject<V1ObjectMeta>
+    {
+        //https://github.com/kubernetes-client/csharp/issues/78#issuecomment-372048262
+        //https://github.com/kubernetes-client/csharp/issues/528
+        var patch = new JsonPatchDocument<T>();
+        patchToApply(patch);
+        //patch.Replace(e => e.Metadata.Labels, newLables);
+
+        var crdMeta = typeof(T).GetCrdMeta();
+        if (crdMeta == null) throw new Exception($"cannot find CRD info for {typeof(T)}");
+
+        var serializedItemToUpdate = JsonConvert.SerializeObject(patch);
+        
+        await client.ApiClient.PatchNamespacedCustomObjectAsync(
+            new V1Patch(serializedItemToUpdate, V1Patch.PatchType.JsonPatch),
+            crdMeta.Group,
+            crdMeta.ApiVersion,
+            entity.Metadata.NamespaceProperty,
+            crdMeta.PluralName,
+            entity.Metadata.Name);
        
 
     }
