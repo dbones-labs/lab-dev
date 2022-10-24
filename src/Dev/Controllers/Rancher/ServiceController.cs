@@ -34,13 +34,13 @@ public class ServiceController : ResourceController<Service>
 
     protected override async Task<ResourceControllerResult?> InternalReconcileAsync(Service entity)
     {
-        await _kubernetesClient.Ensure(() => new V1Namespace(), entity.Name());
+        await _kubernetesClient.Ensure(() => new V1Namespace(), entity.Name(), "default");
         return null;
     }
 
 
     protected override async Task InternalDeletedAsync(Service entity)
     {
-        await _kubernetesClient.Delete<V1Namespace>(entity.Namespace());
+        await _kubernetesClient.Delete<V1Namespace>(entity.Namespace(), "default");
     }
 }

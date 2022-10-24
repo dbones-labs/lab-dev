@@ -156,7 +156,7 @@ public class ProjectController : ResourceController<Project>
                     team.Status.Id.Value,
                     missingRole);
                 return b;
-            });
+            }, null, "default");
         }
         
         if (clusterBindings.Any()) await _kubernetesClient.Delete(obsoleteRoles);

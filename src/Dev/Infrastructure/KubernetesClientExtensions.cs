@@ -120,7 +120,8 @@ public static class KubernetesClientExtensions
         metadata.Annotations.Update(key, value);
         return ns;
     }
-
+    
+    
     public static async Task<T> Ensure<T>(
         this IKubernetesClient client, 
         Func<T> newItem, 
@@ -134,6 +135,7 @@ public static class KubernetesClientExtensions
         resource = await client.Create(newItem, name, @namespace);
         return resource;
     }
+
     
     public static async Task<T> Create<T>(
         this IKubernetesClient client, 
@@ -148,7 +150,7 @@ public static class KubernetesClientExtensions
 
         meta.Name ??= name;
         meta.NamespaceProperty ??= @namespace;
-        meta.NamespaceProperty ??= "default";
+        //meta.NamespaceProperty ??= "default";
 
         if (meta.Name == null && meta.GenerateName == null)
             throw new Exception("no name passed in, or generatedName");

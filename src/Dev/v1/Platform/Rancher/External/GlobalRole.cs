@@ -5,15 +5,16 @@ using KubeOps.Operator.Entities;
 using KubeOps.Operator.Entities.Annotations;
 
 [IgnoreEntity]
-[KubernetesEntity(Group = "management.cattle.io", ApiVersion = "v3")]
-public class Globalrole : CustomKubernetesEntity
+[KubernetesEntity(Group = "management.cattle.io", ApiVersion = "v3", PluralName = "globalroles")]
+public class GlobalRole : CustomKubernetesEntity
 {
-    public static Globalrole Init(string name,string creator)
+    public static GlobalRole Init(string name,string creator)
     {
-        return new Globalrole()
+        return new GlobalRole()
         {
             Metadata = new V1ObjectMeta()
             {
+                Name = name,
                 Annotations = new Dictionary<string, string>()
                 {
                     { "authz.management.cattle.io/cr-name", $"cattle-globalrole-{name}" },
