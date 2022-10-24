@@ -36,7 +36,7 @@ public class TenancyController : ResourceController<Tenancy>
         var @namespace = entity.Metadata.Name; 
         
         //a place to store Tenancy information
-        var ns = await _kubernetesClient.Ensure(() => new V1Namespace(), @namespace);
+        var ns = await _kubernetesClient.Ensure(() => new V1Namespace(), @namespace, "default");
         var context = await _kubernetesClient.Ensure(() => new TenancyContext
         {
             Spec = new()

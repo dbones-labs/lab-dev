@@ -41,7 +41,7 @@ public class ZoneController : ResourceController<Zone>
             await _kubernetesClient.UpdateStatus(entity);
         }
         
-        await _kubernetesClient.Ensure(() => new V1Namespace(), entity.Metadata.Name);
+        await _kubernetesClient.Ensure(() => new V1Namespace(), entity.Metadata.Name, "default");
         
         await _kubernetesClient.Ensure(() => new TenancyContext
         {

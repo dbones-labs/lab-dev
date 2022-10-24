@@ -282,7 +282,7 @@ public class RancherController : IResourceController<Rancher>
 
         await _kubernetesClient.Ensure(() =>
         {
-            var role = Globalrole.Init("lab-view-fleet", entity.Spec.TechnicalUser);
+            var role = GlobalRole.Init("lab-view-fleet", entity.Spec.TechnicalUser);
             role.Rules = new List<V1PolicyRule>
             {
                 new V1PolicyRule()
@@ -321,7 +321,7 @@ public class RancherController : IResourceController<Rancher>
                 }
             };
             return role;
-        }, "lab-view-fleet", "default");
+        }, "lab-view-fleet");
         
         
         
