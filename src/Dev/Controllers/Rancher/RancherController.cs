@@ -340,10 +340,12 @@ public class RancherController : IResourceController<Rancher>
         if (team == null) throw new Exception($"cannot find github team for {github.Spec.GlobalTeam}");
         if (!team.Status.Id.HasValue) throw new Exception($"github team is not synced (yet) - {github.Spec.GlobalTeam}");
 
-        foreach (var globalRole in entity.Spec.GlobalOrganizationRole.Split(",").Select(x=>x.Trim()))
+        foreach (var globalRoleName in entity.Spec.GlobalOrganizationRole.Split(",").Select(x=>x.Trim()))
         {
-            var name = $"{team.Name()}-{globalRole}";
-            
+            var name = $"{team.Name()}-{globalRoleName}";
+
+            var globalRole = await _kubernetesClient.Get<GlobalRole>(globalRoleName);
+
             //todo: make updateable
             await _kubernetesClient.Ensure(() =>
             {
@@ -351,12 +353,12 @@ public class RancherController : IResourceController<Rancher>
                     entity.Spec.TechnicalUser,
                     team.Name(),
                     team.Status.Id.Value,
-                    globalRole,
-                    globalRole
+                    globalRoleName,
+                    globalRole.Metadata.Uid
                 );
                 binding.Metadata.Name = name;
                 return binding;
-            }, name, "default");
+            }, name);
         }
         
         return null;

@@ -22,17 +22,18 @@ public class GlobalRoleBinding : CustomKubernetesEntity
                 Annotations = new Dictionary<string, string>
                 {
                     { "field.cattle.io/creatorId", creator },
-                    { "cleanup.cattle.io/grbUpgradeCluster", "true" },
-                    { "lifecycle.cattle.io/create.mgmt-auth-grb-controller", "true" }
+                    //{ "cleanup.cattle.io/grbUpgradeCluster", "true" },
+                    //{ "lifecycle.cattle.io/create.mgmt-auth-grb-controller", "true" },
+                    //{ "authz.management.cattle.io/crb-name", $"cattle-globalrolebinding-{role}"}
                 },
                 Labels = new Dictionary<string, string>
                 {
                     { Tenancy(), tenancy }
                 },
-                Finalizers = new List<string>
-                {
-                    "controller.cattle.io/mgmt-auth-grb-controller"
-                },
+                // Finalizers = new List<string>
+                // {
+                //     "controller.cattle.io/mgmt-auth-grb-controller"
+                // },
                 //GenerateName = "grb-",
                 OwnerReferences = new List<V1OwnerReference>
                 {
